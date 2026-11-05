@@ -1,0 +1,120 @@
+==============================================================================
+     HCL-NAOH ACID-BASE TITRATION — VIRTUAL CHEMISTRY LAB REPORT
+==============================================================================
+Course:      Engineering Chemistry Laboratory (First Semester B.Tech)
+Student:     First Semester B.Tech Student
+Institution: Department of Chemistry, Engineering Sciences
+Generated:   2026-11-05 10:57:22
+------------------------------------------------------------------------------
+
+1. EXPERIMENTAL AIM & PARAMETERS:
+Aim: To determine the concentration of unknown HCl by titrating against
+     0.100 M standard NaOH using phenolphthalein indicator.
+Reaction:    HCl + NaOH -> NaCl + H2O
+Pipetted HCl Aliquot (V_HCl): 25.00 mL
+Standard NaOH Molarity:       0.1000 M
+Theoretical Equivalence Vol:  22.50 mL
+Safety Protocol Verified:     YES
+
+------------------------------------------------------------------------------
+2. OBSERVATION TABLE:
+Trial   Type      Initial (mL)  Final (mL)  Titre (mL)  pH      Concordant?
+------------------------------------------------------------------------------
+1       Rough     0.00          23.00       23.00       9.80    No
+2       Accurate  0.00          22.50       22.50       8.30    Yes
+3       Accurate  0.00          22.50       22.50       8.30    Yes
+------------------------------------------------------------------------------
+Concordance Status: Concordance achieved across Trials [2, 3] (Mean: 22.50 mL)
+Mean Accurate Titre: 22.50 mL
+
+------------------------------------------------------------------------------
+3. STOICHIOMETRIC CALCULATIONS & QUANTITATIVE DERIVATION:
+=== STEP-BY-STEP STOICHIOMETRIC CONCENTRATION DETERMINATION ===
+1. Balanced Chemical Reaction:
+   HCl (aq) + NaOH (aq) -> NaCl (aq) + H2O (l)
+   Stoichiometric molar ratio: n(HCl) : n(NaOH) = 1 : 1
+
+2. Experimental Parameters:
+   - Volume of HCl pipetted (V_HCl) = 25.00 mL
+   - Standard NaOH Molarity (M_NaOH) = 0.1000 M
+   - Mean Titre Volume of NaOH (V_NaOH) = 22.50 mL
+
+3. Neutralisation Formula:
+   M_HCl x V_HCl = M_NaOH x V_NaOH
+   M_HCl = (M_NaOH x V_NaOH) / V_HCl
+
+4. Numerical Substitution:
+   M_HCl = (0.1000 mol/L x 22.50 mL) / 25.00 mL
+   M_HCl = 0.0900 mol/L (M)
+
+5. Mass Concentration (Strength in g/L):
+   Strength (g/L) = Molarity (mol/L) x Molar Mass of HCl (36.46 g/mol)
+   Strength = 0.0900 mol/L x 36.46 g/mol
+            = 3.28 g/L (exact: 3.2814 g/L)
+
+6. Accuracy and Experimental Error:
+   - Simulation True Reference Molarity = 0.0900 M
+   - Simulation True Strength           = 3.28 g/L
+   - Absolute Error (|M_calc - M_true|) = 0.000000 M
+   - Percentage Error = (|M_calc - M_true| / M_true) x 100%
+                      = (0.000000 / 0.0900) x 100%
+                      = 0.00%
+
+------------------------------------------------------------------------------
+4. EXPERIMENTAL ERROR ANALYSIS SUMMARY:
+------------------------------------------------------------------------------
+Error: Overshooting the Endpoint (Excess NaOH Added)
+  Condition:       Added +1.50 mL excess NaOH beyond endpoint
+  Direction:       Falsely HIGHER
+  Simulated Titre: 24.00 mL | Calc HCl: 0.0960 M (Error: +6.67%)
+  Mechanism:       When titration proceeds until a deep magenta color forms, an excess of OH- ions has been introduced beyond stoichiometric neutralisation. Because V_NaOH in the formula M_HCl = (M_NaOH * V_NaOH) / V_HCl is falsely elevated, the numerator increases, yielding a calculated HCl concentration that is falsely HIGH.
+  Prevention:      Near the expected equivalence volume (~21-22 mL), switch to dropwise additions (0.05 mL increments) with vigorous swirling. Stop at the first faint blush pink that persists for at least 30 seconds.
+
+Error: Undershooting the Endpoint (Premature Cessation)
+  Condition:       Stopped 0.80 mL before true persistence
+  Direction:       Falsely LOWER
+  Simulated Titre: 21.70 mL | Calc HCl: 0.0868 M (Error: -3.56%)
+  Mechanism:       A local high concentration of OH- around the entering drop produces a momentary flash of pink before diffusion occurs. If the student mistakes this transient flash for the endpoint without complete swirling, V_NaOH recorded is lower than required for stoichiometric neutralisation, yielding a calculated HCl concentration that is falsely LOW.
+  Prevention:      Always swirl the conical flask continuously during additions. The genuine endpoint is defined by a uniform faint pink tint across the entire solution lasting >= 30 seconds.
+
+Error: Incorrect Burette Reading (Parallax / Top of Meniscus)
+  Condition:       Burette reading recorded with offset of +0.35 mL
+  Direction:       Falsely HIGHER
+  Simulated Titre: 22.85 mL | Calc HCl: 0.0914 M (Error: +1.56%)
+  Mechanism:       Burette graduations are calibrated for aqueous liquids with a concave meniscus read at eye level at the lowest point of curvature. Viewing from an angle (parallax) or reading from the top edges artificially shifts the measured volume. An artificially enlarged titre directly inflates the calculated molarity proportionally.
+  Prevention:      Position your eyes exactly level with the bottom of the liquid meniscus. Use a white card with a dark horizontal line behind the burette to sharpen meniscus visibility.
+
+Error: Incorrect Pipette Volume (Air Bubble / Incomplete Delivery)
+  Condition:       Delivered 24.20 mL HCl instead of nominal 25.00 mL
+  Direction:       Falsely LOWER
+  Simulated Titre: 21.78 mL | Calc HCl: 0.0871 M (Error: -3.20%)
+  Mechanism:       If an air bubble is drawn into the pipette or the pipette is not drained properly, only 24.20 mL of acid is placed into the flask. The flask contains fewer moles of H+ than assumed. Consequently, less NaOH is required to reach the endpoint. When dividing this smaller titre by the assumed nominal 25.00 mL, the calculated HCl concentration is falsely LOW.
+  Prevention:      Fill the pipette past the calibration line, wipe the exterior with clean tissue, slowly adjust the meniscus to the mark at eye level, and allow full gravity drainage touching the tip against the flask wall for 3 seconds without blowing out the tip.
+
+Error: Air Bubble in Burette Tip Dislodging
+  Condition:       Air bubble of 0.40 mL flushed during titration
+  Direction:       Falsely HIGHER
+  Simulated Titre: 22.90 mL | Calc HCl: 0.0916 M (Error: +1.78%)
+  Mechanism:       An air pocket trapped in the burette tip below the stopcock counts toward the initial liquid column height. When liquid flows, the bubble is expelled and replaced by titrant. The burette reading indicates a larger volume loss than the actual volume of NaOH delivered to the flask. This artificially high titre leads to a calculated HCl molarity that is falsely HIGH.
+  Prevention:      Always flush the burette tip before recording the initial volume. Open the stopcock fully over a waste beaker to dislodge all air bubbles from the tip and ensure a solid column of liquid throughout.
+
+Error: Deionised Water Drops in Conical Flask
+  Condition:       Flask contains 5.0 mL residual deionised water
+  Direction:       UNCHANGED (Accurate)
+  Simulated Titre: 22.50 mL | Calc HCl: 0.0900 M (Error: +0.00%)
+  Mechanism:       Residual pure water in the receiving conical flask dilutes the concentration of the acid in the flask, but does NOT alter the total number of moles of H+ ions transferred from the pipette (n = M_HCl * V_pipette = 0.00225 mol). Since neutralisation depends strictly on molar stoichiometry (mole for mole), the exact same volume of NaOH is required to neutralise all H+ ions. Thus, the calculated HCl concentration is UNCHANGED (100% accurate)!
+  Prevention:      Rinsing the conical flask with deionised water is completely acceptable and standard practice. Never rinse the conical flask with the acid sample, as this would introduce unmeasured extra moles.
+
+Error: Burette Wet with Water (Not Rinsed with NaOH Titrant)
+  Condition:       Residual water dilutes titrant by 5.0%
+  Direction:       Falsely HIGHER
+  Simulated Titre: 23.68 mL | Calc HCl: 0.0947 M (Error: +5.26%)
+  Mechanism:       If the burette is wet with water and not primed with standard NaOH solution, the titrant is diluted inside the burette. Delivering the required moles of NaOH now demands a larger physical volume of titrant. Because the student assumes the nominal 0.100 M concentration in their formula, the inflated volume results in a calculated HCl concentration that is falsely HIGH.
+  Prevention:      Always rinse the cleaned burette at least twice with small 5 mL portions of the standard NaOH solution, coating all inner walls and allowing it to drain through the tip, before filling.
+
+==============================================================================
+5. CONCLUSION:
+Calculated HCl Molarity: 0.0900 M
+Calculated Mass Strength: 3.28 g/L
+Percentage Error:         0.00%
+==============================================================================

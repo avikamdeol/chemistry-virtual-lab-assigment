@@ -1,0 +1,6 @@
+# Virtual Chemistry Laboratory — Dependencies
+# Core GUI and chemistry engines utilize Python 3 Standard Library (tkinter, math, dataclasses, enum).
+# Matplotlib is utilized for high-resolution potentiometric titration curve rendering and export.
+
+matplotlib>=3.7.0
+pytest>=7.0.0

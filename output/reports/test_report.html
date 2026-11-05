@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Chemistry Lab Report — HCl-NaOH Titration</title>
+    <style>
+        :root {
+            --bg-body: #0b0f19;
+            --bg-card: #151d2e;
+            --bg-card-alt: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #38bdf8;
+            --accent-emerald: #10b981;
+            --accent-pink: #ec4899;
+            --border: #2e3c54;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 24px;
+        }
+        .report-container {
+            max-width: 960px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 36px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .header {
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            color: var(--accent-cyan);
+        }
+        .header h2 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            font-size: 13px;
+            background: var(--bg-card-alt);
+            padding: 14px;
+            border-radius: 8px;
+            margin-top: 14px;
+        }
+        .meta-item strong { color: var(--accent-cyan); }
+        h3 {
+            color: var(--text-primary);
+            border-left: 4px solid var(--accent-cyan);
+            padding-left: 10px;
+            margin-top: 28px;
+            margin-bottom: 14px;
+            font-size: 16px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+        th, td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: var(--bg-card-alt);
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+        .badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .badge-concordant { background: #10b98122; color: #10b981; border: 1px solid #10b981; }
+        .badge-normal { background: #334155; color: #cbd5e1; }
+        .color-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+            border: 1px solid #94a3b8;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin: 16px 0;
+        }
+        .metric-card {
+            background: var(--bg-card-alt);
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .metric-label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+        .metric-val { display: block; font-size: 22px; font-weight: bold; color: var(--accent-cyan); }
+        .metric-sub { display: block; font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+        .graph-card {
+            background: var(--bg-card-alt);
+            border: 1px solid var(--border);
+            padding: 18px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .report-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .caption { font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+        .derivation-text pre {
+            background: #090d16;
+            color: #38bdf8;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+        .error-item {
+            background: var(--bg-card-alt);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+        .error-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .error-header h4 { margin: 0; color: var(--text-primary); font-size: 14px; }
+        .badge-direction { font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px; }
+        .chem-desc { font-size: 12px; color: #cbd5e1; margin: 4px 0; }
+        .prevention { font-size: 12px; color: #10b981; margin: 4px 0; }
+        .conclusion-box {
+            background: #10b98115;
+            border: 1px solid #10b98144;
+            padding: 18px;
+            border-radius: 8px;
+            margin-top: 24px;
+        }
+        .conclusion-box h3 { border-left-color: #10b981; }
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 32px;
+            border-top: 1px solid var(--border);
+            padding-top: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <div class="header">
+            <h1>Virtual Chemistry Laboratory Final Report</h1>
+            <h2>Determination of Unknown Hydrochloric Acid Concentration by Acid-Base Titrimetry</h2>
+            <div class="meta-grid">
+                <div class="meta-item"><strong>Course:</strong> Engineering Chemistry Laboratory (First Semester B.Tech)</div>
+                <div class="meta-item"><strong>Student:</strong> First Semester B.Tech Student</div>
+                <div class="meta-item"><strong>Institution:</strong> Department of Chemistry, Engineering Sciences</div>
+                <div class="meta-item"><strong>Generated:</strong> 2026-11-05 10:57:22</div>
+            </div>
+        </div>
+
+        <h3>1. Experiment Aim and Theoretical Principles</h3>
+        <p>
+            <strong>Aim:</strong> To quantitatively determine the molar concentration (M) and mass strength (g/L)
+            of an unknown Hydrochloric Acid (HCl) solution by titrating it against a standard 0.100 M Sodium Hydroxide (NaOH)
+            solution using phenolphthalein as an internal indicator.
+        </p>
+        <p>
+            <strong>Neutralisation Reaction:</strong>
+            <br>
+            <code>HCl + NaOH -> NaCl + H2O</code>
+            <br>
+            Because HCl is a monoprotic strong acid and NaOH is a monobasic strong base, the stoichiometric molar ratio is 1:1.
+            At equivalence, <code>M_HCl x V_HCl = M_NaOH x V_NaOH</code>.
+        </p>
+        <p>
+            <strong>Indicator Mechanism:</strong> Phenolphthalein acts as a weak organic acid existing in a colorless lactone
+            form (H2In) in acidic medium. At pH 8.2–8.5, loss of protons triggers opening of the lactone ring to form the
+            conjugated pink quinoid dianion (In2-). The virtual endpoint is identified by the first persistent faint blush pink color.
+        </p>
+
+        <h3>2. Safety Verification Record</h3>
+        <p>
+            Status: <strong>VERIFIED AND COMPLIANT</strong>.
+            Mandatory personal protective equipment (PPE) including chemical splash goggles, buttoned cotton lab coat,
+            nitrile gloves, apparatus inspection, and emergency eyewash awareness were completed prior to experiment execution.
+        </p>
+
+        <h3>3. Experimental Parameters</h3>
+        <div class="meta-grid">
+            <div class="meta-item"><strong>Acid Aliquot (V_HCl):</strong> 25.00 mL</div>
+            <div class="meta-item"><strong>Standard Titrant (M_NaOH):</strong> 0.1000 M</div>
+            <div class="meta-item"><strong>Indicator:</strong> Phenolphthalein (2 drops)</div>
+            <div class="meta-item"><strong>Theoretical Eq. Volume:</strong> 22.50 mL</div>
+        </div>
+
+        <h3>4. Volumetric Observation Table</h3>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Trial #</th>
+                        <th>Type</th>
+                        <th>Initial (V1)</th>
+                        <th>Final (V2)</th>
+                        <th>Titre (V2 - V1)</th>
+                        <th>Endpoint pH</th>
+                        <th>Observation</th>
+                        <th>Concordant?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td><strong>1</strong></td>
+                <td><span class="badge badge-normal">Rough</span></td>
+                <td>0.00 mL</td>
+                <td>23.00 mL</td>
+                <td><strong>23.00 mL</strong></td>
+                <td>9.80</td>
+                <td><span class="color-dot" style="background-color: #fad2e1;"></span> Deep Pink</td>
+                <td>No</td>
+            </tr>
+            
+            <tr>
+                <td><strong>2</strong></td>
+                <td><span class="badge badge-concordant">Accurate</span></td>
+                <td>0.00 mL</td>
+                <td>22.50 mL</td>
+                <td><strong>22.50 mL</strong></td>
+                <td>8.30</td>
+                <td><span class="color-dot" style="background-color: #fad2e1;"></span> Faint Pink</td>
+                <td>Yes (Concordant)</td>
+            </tr>
+            
+            <tr>
+                <td><strong>3</strong></td>
+                <td><span class="badge badge-concordant">Accurate</span></td>
+                <td>0.00 mL</td>
+                <td>22.50 mL</td>
+                <td><strong>22.50 mL</strong></td>
+                <td>8.30</td>
+                <td><span class="color-dot" style="background-color: #fad2e1;"></span> Faint Pink</td>
+                <td>Yes (Concordant)</td>
+            </tr>
+            
+                </tbody>
+            </table>
+        </div>
+        <p><strong>Concordance Analysis:</strong> Success: 2 accurate trials agree within the tolerance of ±0.10 mL. The calculated concordant mean titre is 22.50 mL, which will be used for stoichiometric concentration determination.</p>
+
+        
+
+        <h3>5. Stoichiometric Calculations & Quantitative Derivation</h3>
+        
+            <div class="calc-box">
+                <h3>Quantitative Stoichiometric Results</h3>
+                <div class="grid-3">
+                    <div class="metric-card">
+                        <span class="metric-label">Calculated HCl Molarity</span>
+                        <span class="metric-val">0.0900 M</span>
+                        <span class="metric-sub">Reference: 0.0900 M</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Mass Strength</span>
+                        <span class="metric-val">3.28 g/L</span>
+                        <span class="metric-sub">Molar mass HCl: 36.46 g/mol</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Percentage Error</span>
+                        <span class="metric-val" style="color: #10b981;">
+                            0.00%
+                        </span>
+                        <span class="metric-sub">Deviation: 0.00000 M</span>
+                    </div>
+                </div>
+                <div class="derivation-text">
+                    <pre>=== STEP-BY-STEP STOICHIOMETRIC CONCENTRATION DETERMINATION ===
+1. Balanced Chemical Reaction:
+   HCl (aq) + NaOH (aq) -> NaCl (aq) + H2O (l)
+   Stoichiometric molar ratio: n(HCl) : n(NaOH) = 1 : 1
+
+2. Experimental Parameters:
+   - Volume of HCl pipetted (V_HCl) = 25.00 mL
+   - Standard NaOH Molarity (M_NaOH) = 0.1000 M
+   - Mean Titre Volume of NaOH (V_NaOH) = 22.50 mL
+
+3. Neutralisation Formula:
+   M_HCl x V_HCl = M_NaOH x V_NaOH
+   M_HCl = (M_NaOH x V_NaOH) / V_HCl
+
+4. Numerical Substitution:
+   M_HCl = (0.1000 mol/L x 22.50 mL) / 25.00 mL
+   M_HCl = 0.0900 mol/L (M)
+
+5. Mass Concentration (Strength in g/L):
+   Strength (g/L) = Molarity (mol/L) x Molar Mass of HCl (36.46 g/mol)
+   Strength = 0.0900 mol/L x 36.46 g/mol
+            = 3.28 g/L (exact: 3.2814 g/L)
+
+6. Accuracy and Experimental Error:
+   - Simulation True Reference Molarity = 0.0900 M
+   - Simulation True Strength           = 3.28 g/L
+   - Absolute Error (|M_calc - M_true|) = 0.000000 M
+   - Percentage Error = (|M_calc - M_true| / M_true) x 100%
+                      = (0.000000 / 0.0900) x 100%
+                      = 0.00%
+</pre>
+                </div>
+            </div>
+            
+
+        <h3>6. Experimental Error Analysis and Diagnostics</h3>
+        <div class="error-container">
+            
+            <div class="error-item">
+                <div class="error-header">
+                    <h4>Overshooting the Endpoint (Excess NaOH Added)</h4>
+                    <span class="badge-direction" style="background: #f43f5e22; color: #f43f5e; border: 1px solid #f43f5e;">
+                        Falsely HIGHER
+                    </span>
+                </div>
+                <p><strong>Condition:</strong> Added +1.50 mL excess NaOH beyond endpoint</p>
+                <p><strong>Simulated Titre:</strong> 24.00 mL (Ideal: 22.50 mL) | 
+                   <strong>Calculated Molarity:</strong> 0.0960 M (Error: +6.67%)</p>
+                <p class="chem-desc"><strong>Chemical Principle:</strong> When titration proceeds until a deep magenta color forms, an excess of OH- ions has been introduced beyond stoichiometric neutralisation. Because V_NaOH in the formula M_HCl = (M_NaOH * V_NaOH) / V_HCl is falsely elevated, the numerator increases, yielding a calculated HCl concentration that is falsely HIGH.</p>
+                <p class="prevention"><strong>Prevention Protocol:</strong> Near the expected equivalence volume (~21-22 mL), switch to dropwise additions (0.05 mL increments) with vigorous swirling. Stop at the first faint blush pink that persists for at least 30 seconds.</p>
+            </div>
+            
+            <div class="error-item">
+                <div class="error-header">
+                    <h4>Undershooting the Endpoint (Premature Cessation)</h4>
+                    <span class="badge-direction" style="background: #38bdf822; color: #38bdf8; border: 1px solid #38bdf8;">
+                        Falsely LOWER
+                    </span>
+                </div>
+                <p><strong>Condition:</strong> Stopped 0.80 mL before true persistence</p>
+                <p><strong>Simulated Titre:</strong> 21.70 mL (Ideal: 22.50 mL) | 
+                   <strong>Calculated Molarity:</strong> 0.0868 M (Error: -3.56%)</p>
+                <p class="chem-desc"><strong>Chemical Principle:</strong> A local high concentration of OH- around the entering drop produces a momentary flash of pink before diffusion occurs. If the student mistakes this transient flash for the endpoint without complete swirling, V_NaOH recorded is lower than required for stoichiometric neutralisation, yielding a calculated HCl concentration that is falsely LOW.</p>
+                <p class="prevention"><strong>Prevention Protocol:</strong> Always swirl the conical flask continuously during additions. The genuine endpoint is defined by a uniform faint pink tint across the entire solution lasting >= 30 seconds.</p>
+            </div>
+            
+            <div class="error-item">
+                <div class="error-header">
+                    <h4>Incorrect Burette Reading (Parallax / Top of Meniscus)</h4>
+                    <span class="badge-direction" style="background: #f43f5e22; color: #f43f5e; border: 1px solid #f43f5e;">
+                        Falsely HIGHER
+                    </span>
+                </div>
+                <p><strong>Condition:</strong> Burette reading recorded with offset of +0.35 mL</p>
+                <p><strong>Simulated Titre:</strong> 22.85 mL (Ideal: 22.50 mL) | 
+                   <strong>Calculated Molarity:</strong> 0.0914 M (Error: +1.56%)</p>
+                <p class="chem-desc"><strong>Chemical Principle:</strong> Burette graduations are calibrated for aqueous liquids with a concave meniscus read at eye level at the lowest point of curvature. Viewing from an angle (parallax) or reading from the top edges artificially shifts the measured volume. An artificially enlarged titre directly inflates the calculated molarity proportionally.</p>
+                <p class="prevention"><strong>Prevention Protocol:</strong> Position your eyes exactly level with the bottom of the liquid meniscus. Use a white card with a dark horizontal line behind the burette to sharpen meniscus visibility.</p>
+            </div>
+            
+            <div class="error-item">
+                <div class="error-header">
+                    <h4>Incorrect Pipette Volume (Air Bubble / Incomplete Delivery)</h4>
+                    <span class="badge-direction" style="background: #38bdf822; color: #38bdf8; border: 1px solid #38bdf8;">
+                        Falsely LOWER
+                    </span>
+                </div>
+                <p><strong>Condition:</strong> Delivered 24.20 mL HCl instead of nominal 25.00 mL</p>
+                <p><strong>Simulated Titre:</strong> 21.78 mL (Ideal: 22.50 mL) | 
+                   <strong>Calculated Molarity:</strong> 0.0871 M (Error: -3.20%)</p>
+                <p class="chem-desc"><strong>Chemical Principle:</strong> If an air bubble is drawn into the pipette or the pipette is not drained properly, only 24.20 mL of acid is placed into the flask. The flask contains fewer moles of H+ than assumed. Consequently, less NaOH is required to reach the endpoint. When dividing this smaller titre by the assumed nominal 25.00 mL, the calculated HCl concentration is falsely LOW.</p>
+                <p class="prevention"><strong>Prevention Protocol:</strong> Fill the pipette past the calibration line, wipe the exterior with clean tissue, slowly adjust the meniscus to the mark at eye level, and allow full gravity drainage touching the tip against the flask wall for 3 seconds without blowing out the tip.</p>
+            </div>
+            
+            <div class="error-item">
+                <div class="error-header">
+                    <h4>Air Bubble in Burette Tip Dislodging</h4>
+                    <span class="badge-direction" style="background: #f43f5e22; color: #f43f5e; border: 1px solid #f43f5e;">
+                        Falsely HIGHER
+                    </span>
+                </div>
+                <p><strong>Condition:</strong> Air bubble of 0.40 mL flushed during titration</p>
+                <p><strong>Simulated Titre:</strong> 22.90 mL (Ideal: 22.50 mL) | 
+                   <strong>Calculated Molarity:</strong> 0.0916 M (Error: +1.78%)</p>
+                <p class="chem-desc"><strong>Chemical Principle:</strong> An air pocket trapped in the burette tip below the stopcock counts toward the initial liquid column height. When liquid flows, the bubble is expelled and replaced by titrant. The burette reading indicates a larger volume loss than the actual volume of NaOH delivered to the flask. This artificially high titre leads to a calculated HCl molarity that is falsely HIGH.</p>
+                <p class="prevention"><strong>Prevention Protocol:</strong> Always flush the burette tip before recording the initial volume. Open the stopcock fully over a waste beaker to dislodge all air bubbles from the tip and ensure a solid column of liquid throughout.</p>
+            </div>
+            
+            <div class="error-item">
+                <div class="error-header">
+                    <h4>Deionised Water Drops in Conical Flask</h4>
+                    <span class="badge-direction" style="background: #10b98122; color: #10b981; border: 1px solid #10b981;">
+                        UNCHANGED (Accurate)
+                    </span>
+                </div>
+                <p><strong>Condition:</strong> Flask contains 5.0 mL residual deionised water</p>
+                <p><strong>Simulated Titre:</strong> 22.50 mL (Ideal: 22.50 mL) | 
+                   <strong>Calculated Molarity:</strong> 0.0900 M (Error: +0.00%)</p>
+                <p class="chem-desc"><strong>Chemical Principle:</strong> Residual pure water in the receiving conical flask dilutes the concentration of the acid in the flask, but does NOT alter the total number of moles of H+ ions transferred from the pipette (n = M_HCl * V_pipette = 0.00225 mol). Since neutralisation depends strictly on molar stoichiometry (mole for mole), the exact same volume of NaOH is required to neutralise all H+ ions. Thus, the calculated HCl concentration is UNCHANGED (100% accurate)!</p>
+                <p class="prevention"><strong>Prevention Protocol:</strong> Rinsing the conical flask with deionised water is completely acceptable and standard practice. Never rinse the conical flask with the acid sample, as this would introduce unmeasured extra moles.</p>
+            </div>
+            
+            <div class="error-item">
+                <div class="error-header">
+                    <h4>Burette Wet with Water (Not Rinsed with NaOH Titrant)</h4>
+                    <span class="badge-direction" style="background: #f43f5e22; color: #f43f5e; border: 1px solid #f43f5e;">
+                        Falsely HIGHER
+                    </span>
+                </div>
+                <p><strong>Condition:</strong> Residual water dilutes titrant by 5.0%</p>
+                <p><strong>Simulated Titre:</strong> 23.68 mL (Ideal: 22.50 mL) | 
+                   <strong>Calculated Molarity:</strong> 0.0947 M (Error: +5.26%)</p>
+                <p class="chem-desc"><strong>Chemical Principle:</strong> If the burette is wet with water and not primed with standard NaOH solution, the titrant is diluted inside the burette. Delivering the required moles of NaOH now demands a larger physical volume of titrant. Because the student assumes the nominal 0.100 M concentration in their formula, the inflated volume results in a calculated HCl concentration that is falsely HIGH.</p>
+                <p class="prevention"><strong>Prevention Protocol:</strong> Always rinse the cleaned burette at least twice with small 5 mL portions of the standard NaOH solution, coating all inner walls and allowing it to drain through the tip, before filling.</p>
+            </div>
+            
+        </div>
+
+        <div class="conclusion-box">
+            <h3>7. Academic Conclusion</h3>
+            <p>
+                The unknown concentration of the sample Hydrochloric Acid solution was determined to be
+                <strong>0.0900 M (3.28 g/L)</strong>,
+                achieving a percentage error of <strong>0.00%</strong>
+                relative to the reference benchmark of 0.0900 M.
+                The experiment confirmed that concordant dropwise additions in the steep inflection region of the strong acid-strong base
+                neutralisation curve yield high analytical precision.
+            </p>
+        </div>
+
+        <div class="footer">
+            Virtual Chemistry Laboratory &copy; 2026 First Semester B.Tech Courseware. Built with Python 3, Tkinter & Matplotlib.
+        </div>
+    </div>
+</body>
+</html>
