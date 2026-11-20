@@ -1,7 +1,12 @@
 """Tests for Module 12: Experimental Error Laboratory Simulations."""
 
+import os
+import sys
 import pytest
 import math
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from error_analysis import ExperimentalErrorSimulator, ErrorDirection
 from config import TRUE_HCL_CONCENTRATION_M
 

@@ -195,42 +195,42 @@ class VirtualTitrationApp(tk.Tk):
 
         # Tab 1: Module 1 — Overview & Apparatus
         self.tab_overview = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab_overview, text=" 1. Lab Overview ")
+        self.notebook.add(self.tab_overview, text=" 1. [Grp 1] Lab Overview ")
         self._build_overview_tab()
 
         # Tab 2: Module 2 — Laboratory Safety Protocol
         self.tab_safety = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab_safety, text=" 2. Safety Verification ")
+        self.notebook.add(self.tab_safety, text=" 2. [Grp 2] Safety Protocols ")
         self._build_safety_tab()
 
         # Tab 3: Module 3 — Solution Preparation Calculator
         self.tab_prep = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab_prep, text=" 3. Solution Preparation ")
+        self.notebook.add(self.tab_prep, text=" 3. [Grp 3] Solution Prep ")
         self._build_solution_prep_tab()
 
         # Tab 4: Modules 4-9 — Virtual Titration Workbench (Main Simulation)
         self.tab_workbench = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab_workbench, text=" 4. Titration Workbench ")
+        self.notebook.add(self.tab_workbench, text=" 4. [Grps 4-9] Titration Workbench ")
         self._build_workbench_tab()
 
         # Tab 5: Module 10 — Results & Concordance Table
         self.tab_results = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab_results, text=" 5. Results & Observations ")
+        self.notebook.add(self.tab_results, text=" 5. [Grp 10] Results Table ")
         self._build_results_tab()
 
         # Tab 6: Module 11 — Stoichiometric Calculations
         self.tab_conc = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab_conc, text=" 6. HCl Concentration ")
+        self.notebook.add(self.tab_conc, text=" 6. [Grp 11] HCl Concentration ")
         self._build_concentration_tab()
 
         # Tab 7: Module 12 — Experimental Error Simulation
         self.tab_errors = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab_errors, text=" 7. Error Analysis Lab ")
+        self.notebook.add(self.tab_errors, text=" 7. [Grp 12] Error Analysis ")
         self._build_error_analysis_tab()
 
         # Tab 8: Module 13 — Final Laboratory Report
         self.tab_report = ttk.Frame(self.notebook)
-        self.notebook.add(self.tab_report, text=" 8. Laboratory Report ")
+        self.notebook.add(self.tab_report, text=" 8. [Grp 13] Lab Report ")
         self._build_report_tab()
 
     # ==========================================================================
@@ -599,6 +599,9 @@ class VirtualTitrationApp(tk.Tk):
 
         ttk.Label(disp_row, text="Dispense NaOH:", font=FONTS["small"]).pack(side=tk.LEFT, padx=(0, 6))
 
+        micro_btn = ttk.Button(disp_row, text="+0.01 mL", command=lambda: self._action_dispense(0.01))
+        micro_btn.pack(side=tk.LEFT, padx=2)
+
         drop_btn = ttk.Button(disp_row, text="+0.05 mL (Drop)", command=lambda: self._action_dispense(0.05))
         drop_btn.pack(side=tk.LEFT, padx=2)
 
@@ -623,7 +626,7 @@ class VirtualTitrationApp(tk.Tk):
 
         ttk.Label(flow_row, text="Custom Volume (mL):", font=FONTS["small"]).pack(side=tk.LEFT, padx=(0, 4))
         self.custom_vol_entry = ttk.Entry(flow_row, width=8)
-        self.custom_vol_entry.insert(0, "0.25")
+        self.custom_vol_entry.insert(0, "0.05")
         self.custom_vol_entry.pack(side=tk.LEFT, padx=2)
 
         custom_add_btn = ttk.Button(flow_row, text="Add", command=self._action_add_custom)

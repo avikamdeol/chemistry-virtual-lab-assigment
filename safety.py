@@ -29,19 +29,8 @@ class LaboratorySafetySystem:
 
     PRECAUTIONS: List[SafetyItem] = [
         SafetyItem(
-            item_id="lab_coat",
-            title="Wear Buttoned Lab Coat",
-            category="PPE",
-            is_mandatory=True,
-            hazard_rationale=(
-                "Both 0.1 M NaOH and 0.09 M HCl cause degradation of personal clothing "
-                "and can leach onto skin upon accidental splashing."
-            ),
-            guidance="Standard 100% cotton lab coat fastened completely to wrists.",
-        ),
-        SafetyItem(
-            item_id="safety_goggles",
-            title="Wear Splash-Resistant Safety Goggles",
+            item_id="goggles",
+            title="Are safety goggles being worn?",
             category="PPE",
             is_mandatory=True,
             hazard_rationale=(
@@ -52,7 +41,7 @@ class LaboratorySafetySystem:
         ),
         SafetyItem(
             item_id="gloves",
-            title="Wear Chemical-Resistant Nitrile Gloves",
+            title="Are protective gloves being worn?",
             category="PPE",
             is_mandatory=True,
             hazard_rationale=(
@@ -62,48 +51,58 @@ class LaboratorySafetySystem:
             guidance="Powder-free disposable nitrile gloves; change immediately if contaminated.",
         ),
         SafetyItem(
-            item_id="clean_apparatus",
-            title="Inspect Clean & Crack-Free Glassware",
-            category="Apparatus",
+            item_id="lab_coat",
+            title="Is a laboratory coat being worn?",
+            category="PPE",
             is_mandatory=True,
             hazard_rationale=(
-                "Hairline cracks in burettes or flasks can catastrophically fracture under liquid "
-                "pressure, dispersing chemical solutions across bench surfaces."
+                "Both 0.1 M NaOH and 0.09 M HCl cause degradation of personal clothing "
+                "and can leach onto skin upon accidental splashing."
             ),
-            guidance="Inspect burette barrel, tip, stopcock seal, and pipette bulb for flaws.",
+            guidance="Standard 100% cotton lab coat fastened completely to wrists.",
         ),
         SafetyItem(
-            item_id="hcl_handling",
-            title="Safe Handling of Hydrochloric Acid (HCl)",
-            category="Chemical Protocol",
+            item_id="shoes",
+            title="Are closed-toe shoes being worn?",
+            category="PPE",
             is_mandatory=True,
-            hazard_rationale=(
-                "HCl solutions emit acidic vapour. Pipetting must never be performed by mouth; "
-                "acid must always be transferred using a rubber suction bulb or pipette pump."
-            ),
-            guidance="Never pipette by mouth. Keep stock bottles capped when not withdrawing.",
+            hazard_rationale="Protects feet against falling glassware fragments and spilled corrosive liquids.",
+            guidance="Leather or synthetic closed-toe footwear completely covering feet.",
         ),
         SafetyItem(
-            item_id="naoh_handling",
-            title="Safe Handling of Sodium Hydroxide (NaOH)",
-            category="Chemical Protocol",
+            item_id="hair",
+            title="Is long hair properly tied back?",
+            category="Personal Safety",
             is_mandatory=True,
-            hazard_rationale=(
-                "Solid NaOH is strongly hygroscopic and dissolves exothermically in water, "
-                "generating significant local heat that can crack glass if added too quickly."
-            ),
-            guidance="Dissolve slowly in cold water with constant stirring; store in polyethylene bottles.",
+            hazard_rationale="Prevents hair from coming into contact with chemicals, apparatus, or reagents.",
+            guidance="Tie hair securely back behind shoulders.",
         ),
         SafetyItem(
-            item_id="spill_eyewash",
-            title="Locate Eyewash Station, Safety Shower & Spill Kit",
-            category="Emergency",
+            item_id="clean_area",
+            title="Is the working area clean and uncluttered?",
+            category="Workplace Safety",
+            is_mandatory=True,
+            hazard_rationale="Clutter increases the risk of tipping over volumetric glassware or reagent bottles.",
+            guidance="Clear benchtop of backpacks, unnecessary papers, and non-essential items.",
+        ),
+        SafetyItem(
+            item_id="no_eating",
+            title="Is eating and drinking avoided in the lab?",
+            category="Hygiene Protocol",
+            is_mandatory=True,
+            hazard_rationale="Prevents accidental ingestion of toxic or corrosive chemicals via contaminated hands or food.",
+            guidance="No food, beverages, chewing gum, or water bottles allowed in laboratory.",
+        ),
+        SafetyItem(
+            item_id="chemical_handling",
+            title="Are chemical handling and spill precautions understood?",
+            category="Emergency Protocol",
             is_mandatory=True,
             hazard_rationale=(
                 "Immediate 15-minute continuous water flushing is the essential first response "
                 "for acid or alkali splashes in eyes or on skin."
             ),
-            guidance="Know exact route to emergency shower, eyewash fountain, and neutralising spill kit.",
+            guidance="Know location of eyewash, safety shower, and neutralising spill kits.",
         ),
     ]
 

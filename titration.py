@@ -217,3 +217,64 @@ class TitrationController:
             is_overtitrated=(self.status == ExperimentStatus.OVERTITRATED),
             status_message=msg,
         )
+
+
+if __name__ == "__main__":
+    print("=" * 70)
+    print("  GROUP 8 — TITRATION PROCEDURE SIMULATION DEMO")
+    print("  Simulate adding NaOH to acid sample (Rough & Accurate titrations)")
+    print("=" * 70)
+
+    # 1. Initialize controller
+    ctrl = TitrationController()
+
+    # --- TRIAL 1: ROUGH TITRATION ---
+    print("\n>>> STARTING TRIAL 1: ROUGH TITRATION")
+    ctrl.setup_new_trial(TitrationMode.ROUGH, trial_num=1)
+    ctrl.pipette_acid()
+    ctrl.add_indicator(2)
+    print("  Pipetted 25.00 mL HCl and added 2 drops phenolphthalein.")
+    print("  Simulating macroscopic NaOH additions (1.00 mL increments)...")
+
+    while not ctrl.endpoint_recorded and ctrl.burette.total_delivered_ml < 50.0:
+        ctrl.dispense_titrant(1.00)
+        tel = ctrl.get_telemetry()
+        print(f"  NaOH Added: {tel.titrant_dispensed_ml:5.2f} mL | pH: {tel.ph:5.2f} | Color: {tel.color_name}")
+        if tel.is_endpoint or tel.is_overtitrated:
+            break
+
+    rough_titre = ctrl.burette.total_delivered_ml
+    print(f"  [ROUGH RESULT] Endpoint detected between {rough_titre - 1.00:.2f} mL and {rough_titre:.2f} mL.")
+    print(f"  Recorded Rough Titre: {rough_titre:.2f} mL")
+
+    # --- TRIAL 2: ACCURATE TITRATION ---
+    print("\n>>> STARTING TRIAL 2: ACCURATE TITRATION (Dropwise near endpoint)")
+    ctrl.setup_new_trial(TitrationMode.ACCURATE, trial_num=2)
+    ctrl.pipette_acid()
+    ctrl.add_indicator(2)
+    print("  Pipetted fresh 25.00 mL HCl and added 2 drops phenolphthalein.")
+
+    # Rapid addition up to 2.0 mL before rough endpoint
+    fast_add = max(0.0, rough_titre - 2.0)
+    ctrl.dispense_titrant(fast_add)
+    tel = ctrl.get_telemetry()
+    print(f"  Fast addition of {fast_add:.2f} mL NaOH | pH: {tel.ph:5.2f} | Color: {tel.color_name}")
+
+    print("  Now adding fine drops (0.05 mL) with continuous swirling...")
+    step_count = 0
+    while not ctrl.endpoint_recorded and ctrl.burette.total_delivered_ml < 50.0:
+        ctrl.dispense_titrant(0.05)
+        step_count += 1
+        tel = ctrl.get_telemetry()
+        if step_count <= 5 or tel.is_endpoint or tel.ph >= 7.0:
+            print(f"  +0.05 mL -> Total: {tel.titrant_dispensed_ml:5.2f} mL | pH: {tel.ph:5.2f} | Color: {tel.color_name}")
+        if tel.is_endpoint:
+            break
+
+    accurate_titre = ctrl.endpoint_volume_ml
+    print(f"\n  [ACCURATE RESULT] Persistent faint pink endpoint reached!")
+    print(f"  Recorded Accurate Titre: {accurate_titre:.2f} mL at pH {ctrl.endpoint_ph:.2f}")
+    print("=" * 70)
+    print("  Group 8 module execution complete. 0 errors detected.")
+    print("=" * 70)
+

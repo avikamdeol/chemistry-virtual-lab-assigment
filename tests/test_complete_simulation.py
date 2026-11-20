@@ -1,7 +1,11 @@
 """End-to-end integration test verifying the complete 13-stage virtual lab experiment."""
 
 import os
+import sys
 import math
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from titration import TitrationController, TitrationMode, ExperimentStatus
 from results import ResultsTableManager
 from concentration import ConcentrationCalculator

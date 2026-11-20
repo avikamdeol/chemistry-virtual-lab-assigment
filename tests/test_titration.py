@@ -1,7 +1,12 @@
 """Tests for Modules 4, 5, 6, and 8: Burette, Flask, Indicator, and Titration Controller."""
 
+import os
+import sys
 import pytest
 import math
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from burette import VirtualBurette
 from flask import ConicalFlask
 from indicator import PhenolphthaleinIndicator

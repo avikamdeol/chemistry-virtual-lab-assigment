@@ -36,9 +36,11 @@ WATER_KW: float = 1.0e-14
 NEUTRAL_PH: float = 7.00
 
 # Indicator Transition Limits (Phenolphthalein)
+# Transition range is 8.20 to 10.00+. The first drop of excess NaOH past equivalence (22.55 mL)
+# produces pH ~10.02, which represents the standard visual faint/light pink endpoint.
 INDICATOR_PH_COLORLESS_LIMIT: float = 8.20
-INDICATOR_PH_FAINT_PINK_LIMIT: float = 8.50
-INDICATOR_PH_DEEP_PINK_LIMIT: float = 10.00
+INDICATOR_PH_FAINT_PINK_LIMIT: float = 10.30
+INDICATOR_PH_DEEP_PINK_LIMIT: float = 10.80
 
 # Burette & Measurement Defaults
 DEFAULT_BURETTE_CAPACITY_ML: float = 50.00

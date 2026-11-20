@@ -1,7 +1,12 @@
 """Tests for Module 7 (pH Measurement) and Physical Equilibrium."""
 
+import os
+import sys
 import pytest
 import math
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from ph_calculator import PHCalculator
 from config import (
     ACID_VOLUME_ML,

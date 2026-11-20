@@ -1,7 +1,12 @@
 """Tests for Modules 3, 10, and 11: Solution Prep, Results Table, and HCl Concentration."""
 
+import os
+import sys
 import pytest
 import math
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from concentration import ConcentrationCalculator
 from solution_preparation import SolutionPreparationCalculator
 from results import ResultsTableManager
