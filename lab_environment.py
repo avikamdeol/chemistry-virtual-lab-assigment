@@ -54,48 +54,48 @@ class ApparatusVisualiser(tk.Canvas):
         bench_y = self.height - 35
         self.create_rectangle(
             0, bench_y, self.width, self.height,
-            fill="#1e2433", outline="#334155", width=2
+            fill="#e2e8f0", outline="#cbd5e1", width=1.5
         )
-        self.create_line(0, bench_y, self.width, bench_y, fill=THEME.ACCENT_CYAN, width=1.5)
+        self.create_line(0, bench_y, self.width, bench_y, fill=THEME.ACCENT_CYAN, width=2)
         self.create_text(
             self.width / 2, self.height - 16,
             text="ANALYTICAL CHEMISTRY WORKBENCH — VIRTUAL LAB",
-            fill=THEME.TEXT_MUTED, font=FONTS["small"]
+            fill=THEME.TEXT_SECONDARY, font=FONTS["small"]
         )
 
         # 2. Retort Stand and Clamped Burette (Left-Center)
         stand_x = 120
         # Cast Iron Stand Base
-        self.create_rectangle(stand_x - 45, bench_y - 12, stand_x + 45, bench_y, fill="#334155", outline="#64748b", width=1.5)
+        self.create_rectangle(stand_x - 45, bench_y - 12, stand_x + 45, bench_y, fill="#475569", outline="#334155", width=1.5)
         # Vertical Steel Rod
         self.create_rectangle(stand_x - 3, 30, stand_x + 3, bench_y - 12, fill="#94a3b8", outline="#64748b")
         # Clamp Bosshead
-        self.create_rectangle(stand_x - 6, 95, stand_x + 25, 110, fill="#475569", outline="#64748b")
+        self.create_rectangle(stand_x - 6, 95, stand_x + 25, 110, fill="#64748b", outline="#475569")
         # Burette Glass Barrel
         bx = stand_x + 35
         b_top = 40
         b_bottom = bench_y - 90
         # Glass body
-        self.create_rectangle(bx - 9, b_top, bx + 9, b_bottom, fill="#0f172a", outline=THEME.GLASS_OUTLINE, width=1.5)
+        self.create_rectangle(bx - 9, b_top, bx + 9, b_bottom, fill="#ffffff", outline=THEME.GLASS_OUTLINE, width=1.5)
         # Liquid column in burette (0.1 M NaOH)
         liq_top = b_top + 25
-        self.create_rectangle(bx - 7, liq_top, bx + 7, b_bottom - 10, fill="#38bdf8", stipple="gray50", outline="")
+        self.create_rectangle(bx - 7, liq_top, bx + 7, b_bottom - 10, fill="#0284c7", stipple="gray50", outline="")
         # Meniscus curve
-        self.create_arc(bx - 7, liq_top - 4, bx + 7, liq_top + 4, start=180, extent=180, outline="#38bdf8", width=1.5)
+        self.create_arc(bx - 7, liq_top - 4, bx + 7, liq_top + 4, start=180, extent=180, outline="#0284c7", width=1.5)
         # Burette Graduations
         for gy in range(b_top + 10, b_bottom - 15, 8):
             is_major = ((gy - b_top) % 24 == 0)
             length = 6 if is_major else 3
-            self.create_line(bx - 8, gy, bx - 8 + length, gy, fill="#94a3b8", width=1)
+            self.create_line(bx - 8, gy, bx - 8 + length, gy, fill="#475569", width=1)
         # Stopcock Valve
         self.create_polygon(
             bx - 5, b_bottom - 10, bx + 5, b_bottom - 10,
             bx + 3, b_bottom, bx - 3, b_bottom,
             fill="#64748b", outline=THEME.GLASS_OUTLINE
         )
-        self.create_rectangle(bx - 12, b_bottom - 7, bx + 12, b_bottom - 3, fill=THEME.ACCENT_CYAN, outline="#f8fafc")
+        self.create_rectangle(bx - 12, b_bottom - 7, bx + 12, b_bottom - 3, fill=THEME.ACCENT_CYAN, outline="#334155")
         # Burette Jet Tip
-        self.create_polygon(bx - 3, b_bottom, bx + 3, b_bottom, bx, b_bottom + 18, fill="#0f172a", outline=THEME.GLASS_OUTLINE)
+        self.create_polygon(bx - 3, b_bottom, bx + 3, b_bottom, bx, b_bottom + 18, fill="#ffffff", outline=THEME.GLASS_OUTLINE)
         self.create_text(bx, b_top - 12, text="50.00 mL Burette", fill=THEME.ACCENT_CYAN, font=FONTS["small"])
 
         # 3. Conical Flask (Directly Under Burette Tip)
@@ -104,38 +104,38 @@ class ApparatusVisualiser(tk.Canvas):
         f_base = bench_y - 2
         f_neck_top = f_top - 14
         # Neck
-        self.create_rectangle(fx - 7, f_neck_top, fx + 7, f_top, fill="#0f172a", outline=THEME.GLASS_OUTLINE, width=1.5)
+        self.create_rectangle(fx - 7, f_neck_top, fx + 7, f_top, fill="#ffffff", outline=THEME.GLASS_OUTLINE, width=1.5)
         # Conical body
         self.create_polygon(
             fx - 7, f_top, fx + 7, f_top,
             fx + 30, f_base, fx - 30, f_base,
-            fill="#0f172a", outline=THEME.GLASS_OUTLINE, width=1.5
+            fill="#ffffff", outline=THEME.GLASS_OUTLINE, width=1.5
         )
         # Liquid in Flask (Clear Acid + Faint Pink hint)
         liq_h = f_base - 18
         self.create_polygon(
             fx - 18, liq_h, fx + 18, liq_h,
             fx + 28, f_base - 1, fx - 28, f_base - 1,
-            fill="#fad2e1", outline="", stipple="gray75"
+            fill="#fbcfe8", outline="", stipple="gray75"
         )
         self.create_text(fx, bench_y + 16, text="Conical Flask", fill=THEME.TEXT_SECONDARY, font=FONTS["small"])
 
         # 4. Volumetric Bulb Pipette (Center-Right)
         px = 250
         # Upper stem
-        self.create_rectangle(px - 3, 50, px + 3, 140, fill="#0f172a", outline=THEME.GLASS_OUTLINE)
+        self.create_rectangle(px - 3, 50, px + 3, 140, fill="#ffffff", outline=THEME.GLASS_OUTLINE)
         # Calibration Mark line
         self.create_line(px - 6, 80, px + 6, 80, fill=THEME.ACCENT_EMERALD, width=2)
         self.create_text(px + 38, 80, text="25.00 mL Mark", fill=THEME.ACCENT_EMERALD, font=FONTS["small"])
         # Bulb
-        self.create_oval(px - 14, 140, px + 14, 210, fill="#0f172a", outline=THEME.GLASS_OUTLINE, width=1.5)
+        self.create_oval(px - 14, 140, px + 14, 210, fill="#ffffff", outline=THEME.GLASS_OUTLINE, width=1.5)
         # Liquid in bulb
-        self.create_oval(px - 11, 145, px + 11, 205, fill="#38bdf8", stipple="gray25", outline="")
+        self.create_oval(px - 11, 145, px + 11, 205, fill="#e0f2fe", outline="")
         # Lower stem & tip
         self.create_polygon(
             px - 3, 210, px + 3, 210,
             px, bench_y - 2,
-            fill="#0f172a", outline=THEME.GLASS_OUTLINE
+            fill="#ffffff", outline=THEME.GLASS_OUTLINE
         )
         self.create_text(px, 35, text="Bulb Pipette", fill=THEME.ACCENT_CYAN, font=FONTS["small"])
 
@@ -170,6 +170,9 @@ class ApparatusVisualiser(tk.Canvas):
         self.create_text(rx2, bench_y - 102, text="Sample", fill=THEME.ACCENT_ROSE, font=FONTS["small"])
 
 
+from reaction_particles import InteractiveReactionWidget
+
+
 class LabEnvironmentView(ttk.Frame):
     """Complete Module 1 Overview Panel with apparatus display and theory notes."""
 
@@ -184,21 +187,35 @@ class LabEnvironmentView(ttk.Frame):
         paned = ttk.PanedWindow(self, orient=tk.HORIZONTAL)
         paned.pack(fill=tk.BOTH, expand=True, padx=12, pady=12)
 
-        # Left Column: Interactive Apparatus Canvas
-        left_frame = ttk.LabelFrame(paned, text=" Experimental Setup & Apparatus ", padding=10)
+        # Left Column: Dual View (Macroscopic Glassware + Submicroscopic Reaction Particles)
+        left_frame = ttk.LabelFrame(paned, text=" Laboratory Setup & Molecular Reaction ", padding=8)
         paned.add(left_frame, weight=1)
 
-        self.apparatus_canvas = ApparatusVisualiser(left_frame, width=540, height=390)
+        self.visual_notebook = ttk.Notebook(left_frame)
+        self.visual_notebook.pack(fill=tk.BOTH, expand=True)
+
+        # Sub-Tab A: Macroscopic Glassware Canvas
+        tab_apparatus = ttk.Frame(self.visual_notebook)
+        self.visual_notebook.add(tab_apparatus, text=" ⚗ Glassware Setup (Macro) ")
+
+        self.apparatus_canvas = ApparatusVisualiser(tab_apparatus, width=540, height=360)
         self.apparatus_canvas.pack(fill=tk.BOTH, expand=True)
 
-        legend_frame = ttk.Frame(left_frame)
-        legend_frame.pack(fill=tk.X, pady=(8, 0))
+        legend_frame = ttk.Frame(tab_apparatus)
+        legend_frame.pack(fill=tk.X, pady=(6, 0))
         ttk.Label(
             legend_frame,
             text="Apparatus: 50 mL Class-A Burette | 25 mL Bulb Pipette | 250 mL Conical Flask | Reagent Bottles",
             font=FONTS["small"],
             foreground=THEME.TEXT_MUTED,
         ).pack(side=tk.LEFT)
+
+        # Sub-Tab B: Submicroscopic Particle Reaction Chamber (H+ + OH- -> H2O)
+        self.tab_particles = ttk.Frame(self.visual_notebook)
+        self.visual_notebook.add(self.tab_particles, text=" 🔬 Molecular Reaction: H⁺ + OH⁻ ⟶ H₂O ")
+
+        self.reaction_widget = InteractiveReactionWidget(self.tab_particles, width=540, height=340)
+        self.reaction_widget.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
 
         # Right Column: Experiment Title, Aim, Theory & Chemical Parameters
         right_frame = ttk.LabelFrame(paned, text=" Theoretical Principles & Parameters ", padding=12)
@@ -255,6 +272,14 @@ class LabEnvironmentView(ttk.Frame):
             font=FONTS["mono_bold"],
             foreground=THEME.TEXT_PRIMARY,
         ).pack(anchor="w", pady=2)
+
+        # Button to switch to particle view
+        view_particles_btn = ttk.Button(
+            rxn_frame,
+            text="🔬 Watch Submicroscopic H⁺ & OH⁻ Particles Joining Together",
+            command=lambda: self.visual_notebook.select(self.tab_particles)
+        )
+        view_particles_btn.pack(anchor="w", pady=(4, 2))
 
         # Parameters Grid
         param_frame = ttk.Frame(scroll_content)

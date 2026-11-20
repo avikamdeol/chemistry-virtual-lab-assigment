@@ -74,38 +74,38 @@ THEORETICAL_EQUIVALENCE_VOLUME_ML: float = calculate_theoretical_equivalence_vol
 
 @dataclass(frozen=True)
 class UIColors:
-    # Backgrounds
-    BG_DARKEST: str = "#090d16"     # Deep canvas background
-    BG_MAIN: str = "#0f172a"        # Charcoal slate dashboard main
-    BG_PANEL: str = "#1e293b"       # Card / panel background
-    BG_PANEL_ALT: str = "#243247"   # Elevated card background
-    BG_INPUT: str = "#141e2e"       # Entry / input background
+    # Backgrounds - Clean, bright, professional laboratory palette
+    BG_DARKEST: str = "#ffffff"     # Clean bright lab canvas background
+    BG_MAIN: str = "#f1f5f9"        # Soft crisp lab workbench main background
+    BG_PANEL: str = "#ffffff"       # Clean pure white card / panel background
+    BG_PANEL_ALT: str = "#f8fafc"   # Slightly elevated panel background
+    BG_INPUT: str = "#ffffff"       # Clean white entry / input background
     
     # Borders & Dividers
-    BORDER_SUBTLE: str = "#2d3c52"
-    BORDER_FOCUS: str = "#38bdf8"
+    BORDER_SUBTLE: str = "#cbd5e1"  # Crisp slate-300 border
+    BORDER_FOCUS: str = "#0284c7"   # Vivid lab cyan/blue focus
     
-    # Typography
-    TEXT_PRIMARY: str = "#f8fafc"
-    TEXT_SECONDARY: str = "#cbd5e1"
-    TEXT_MUTED: str = "#64748b"
-    TEXT_HIGHLIGHT: str = "#38bdf8"
+    # Typography (High Contrast, Highly Legible, Professional)
+    TEXT_PRIMARY: str = "#0f172a"   # Deep slate 900
+    TEXT_SECONDARY: str = "#334155" # Slate 700
+    TEXT_MUTED: str = "#64748b"     # Slate 500
+    TEXT_HIGHLIGHT: str = "#0284c7"
     
     # Scientific Functional Accents
-    ACCENT_CYAN: str = "#38bdf8"    # Primary instrument highlight
-    ACCENT_EMERALD: str = "#10b981" # Equivalence / Pass / Success
-    ACCENT_AMBER: str = "#f59e0b"   # Warning / Precaution / Near Endpoint
-    ACCENT_ROSE: str = "#f43f5e"    # Acidic / Hazard / Error
-    ACCENT_INDIGO: str = "#6366f1"  # Base / Neutral
-    ACCENT_PINK: str = "#ec4899"    # Phenolphthalein Endpoint Pink
+    ACCENT_CYAN: str = "#0284c7"    # Deep Sky / Lab Blue
+    ACCENT_EMERALD: str = "#059669" # Forest / Emerald Green
+    ACCENT_AMBER: str = "#d97706"   # Golden Amber
+    ACCENT_ROSE: str = "#e11d48"    # Vivid Rose
+    ACCENT_INDIGO: str = "#4f46e5"  # Modern Indigo
+    ACCENT_PINK: str = "#db2777"    # Vivid Phenolphthalein Pink
     
     # Liquid Colors for Canvas Apparatus
-    LIQUID_HCL_CLEAR: str = "#e2e8f0"        # Water-clear with faint meniscus tint
+    LIQUID_HCL_CLEAR: str = "#f0f9ff"        # Crystal-clear water/acid with soft sky tint
     LIQUID_FAINT_PINK: str = "#fbcfe8"       # Pale blush pink (first persistent endpoint)
     LIQUID_MID_PINK: str = "#f472b6"         # Transition pink
     LIQUID_DEEP_MAGENTA: str = "#db2777"     # Over-titrated basic magenta
-    GLASS_OUTLINE: str = "#94a3b8"           # Glass apparatus stroke
-    GLASS_FILL: str = "#1e293b"              # Glass reflection tint
+    GLASS_OUTLINE: str = "#334155"           # Crisp slate glass outline
+    GLASS_FILL: str = "#f8fafc"              # Clear glass reflection tint
 
 
 THEME = UIColors()

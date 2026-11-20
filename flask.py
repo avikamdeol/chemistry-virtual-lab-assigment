@@ -62,6 +62,16 @@ class ConicalFlask:
         self.is_swirled: bool = True
         self.current_ph: float = 7.00  # pure deionised water before acid transfer
 
+    @property
+    def indicator_drops(self) -> int:
+        """Total drops of indicator added."""
+        return self.indicator.drops_added
+
+    @property
+    def has_indicator(self) -> bool:
+        """True if indicator has been added to flask."""
+        return self.indicator.drops_added > 0
+
     def pipette_hcl_sample(self, volume_ml: float = ACID_VOLUME_ML) -> None:
         """Transfer calibrated volume of unknown HCl into the flask via pipette."""
         if volume_ml <= 0:

@@ -16,6 +16,7 @@ Module 13 & Full System Integration:
 import os
 import sys
 import math
+import random
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from typing import Optional, List
@@ -48,6 +49,7 @@ from concentration import ConcentrationCalculator, ConcentrationResult
 from error_analysis import ExperimentalErrorSimulator, ErrorSimulationOutcome, ErrorDirection
 from report_generator import LaboratoryReportGenerator
 from lab_environment import LabEnvironmentView
+from reaction_particles import ParticleReactionChamber
 
 
 class VirtualTitrationApp(tk.Tk):
@@ -83,6 +85,26 @@ class VirtualTitrationApp(tk.Tk):
         self.auto_flow_job: Optional[str] = None
         self.graph_canvas: Optional[FigureCanvasTkAgg] = None
 
+        # Animation & Submicroscopic Particle State
+        self.is_animating: bool = False
+        self.anim_drop_y: Optional[float] = None
+        self.anim_stopcock_open: bool = False
+        self.anim_ripples: List[Dict] = []
+        self.anim_pink_bloom_r: float = 0.0
+        self.anim_swirl_offset: float = 0.0
+        self.anim_swirl_slosh: float = 0.0
+        self.anim_pipette_visible: bool = False
+        self.anim_pipette_y: float = 0.0
+        self.anim_pipette_liquid_level: float = 1.0
+        self.anim_pipette_stream: bool = False
+        self.anim_flask_fill_frac: float = 1.0
+        self.is_continuous_flow: bool = False
+        self.anim_indicator_dropper_visible: bool = False
+        self.anim_indicator_y: float = 0.0
+        self.anim_indicator_drops: List[dict] = []
+        self.flask_chamber = ParticleReactionChamber()
+        self.show_particles_var: tk.BooleanVar = tk.BooleanVar(value=True)
+
         # Style Configuration
         self._init_theme_styles()
 
@@ -95,6 +117,9 @@ class VirtualTitrationApp(tk.Tk):
 
         # Initialize default state
         self._update_safety_badge()
+
+        # Start continuous submicroscopic particle physics update loop
+        self.after(300, self._particle_physics_loop)
 
     def _init_theme_styles(self) -> None:
         """Configure ttk visual styles for dark scientific dashboard."""
@@ -179,8 +204,8 @@ class VirtualTitrationApp(tk.Tk):
             status_box,
             text="SAFETY: PENDING VERIFICATION",
             font=FONTS["mono_bold"],
-            fg="#ef4444",
-            bg="#3b1219",
+            fg="#dc2626",
+            bg="#fee2e2",
             padx=12,
             pady=4,
             relief="solid",
@@ -192,6 +217,7 @@ class VirtualTitrationApp(tk.Tk):
         """Construct main navigation tab notebook covering all 13 modules."""
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 10))
+        self.notebook.bind("<<NotebookTabChanged>>", self._on_notebook_tab_changed)
 
         # Tab 1: Module 1 — Overview & Apparatus
         self.tab_overview = ttk.Frame(self.notebook)
@@ -232,6 +258,17 @@ class VirtualTitrationApp(tk.Tk):
         self.tab_report = ttk.Frame(self.notebook)
         self.notebook.add(self.tab_report, text=" 8. [Grp 13] Lab Report ")
         self._build_report_tab()
+
+    def _on_notebook_tab_changed(self, event=None) -> None:
+        """Instantly render apparatus upon switching to titration workbench tab."""
+        try:
+            selected = self.notebook.select()
+            if selected == str(self.tab_workbench):
+                self.workbench_canvas.update_idletasks()
+                self._render_workbench_apparatus()
+                self.after(20, self._render_workbench_apparatus)
+        except Exception:
+            pass
 
     # ==========================================================================
     # TAB 1: Laboratory Overview & Apparatus (Module 1)
@@ -349,14 +386,14 @@ class VirtualTitrationApp(tk.Tk):
         if self.is_safety_verified:
             self.safety_badge.config(
                 text="SAFETY: VERIFIED & CLEAR",
-                fg=THEME.ACCENT_EMERALD,
-                bg="#064e3b"
+                fg="#059669",
+                bg="#d1fae5"
             )
         else:
             self.safety_badge.config(
                 text="SAFETY: PENDING VERIFICATION",
-                fg="#f87171",
-                bg="#450a0a"
+                fg="#dc2626",
+                bg="#fee2e2"
             )
 
     # ==========================================================================
@@ -429,14 +466,17 @@ class VirtualTitrationApp(tk.Tk):
 
         self.prep_output_txt = tk.Text(
             right_card,
-            bg=THEME.BG_DARKEST,
-            fg="#38bdf8",
-            insertbackground="#ffffff",
+            bg="#ffffff",
+            fg="#0f172a",
+            insertbackground="#0f172a",
             font=FONTS["mono"],
             wrap=tk.WORD,
-            bd=0,
-            padx=10,
-            pady=10
+            relief="solid",
+            bd=1,
+            highlightthickness=1,
+            highlightbackground=THEME.BORDER_SUBTLE,
+            padx=12,
+            pady=12
         )
         self.prep_output_txt.pack(fill=tk.BOTH, expand=True)
 
@@ -489,6 +529,8 @@ class VirtualTitrationApp(tk.Tk):
             highlightbackground=THEME.BORDER_SUBTLE
         )
         self.workbench_canvas.pack(fill=tk.BOTH, expand=True)
+        self.workbench_canvas.bind("<Configure>", lambda e: self._render_workbench_apparatus())
+        self.workbench_canvas.bind("<Map>", lambda e: self._render_workbench_apparatus())
 
         # Apparatus Stage Control Buttons
         stage_btn_frame = ttk.Frame(apparatus_card)
@@ -510,10 +552,30 @@ class VirtualTitrationApp(tk.Tk):
 
         self.btn_swirl = ttk.Button(
             stage_btn_frame,
-            text="Swirl Flask",
+            text="3. Swirl Flask (Mix)",
             command=self._action_swirl
         )
         self.btn_swirl.pack(fill=tk.X, pady=2)
+
+        # Particle toggle & live stoichiometric ion readout
+        particle_toggle = ttk.Checkbutton(
+            stage_btn_frame,
+            text="🔬 Show Molecular Particles (H⁺+OH⁻⟶H₂O)",
+            variable=self.show_particles_var,
+            command=self._render_workbench_apparatus
+        )
+        particle_toggle.pack(fill=tk.X, pady=(4, 2))
+
+        self.mini_particle_lbl = tk.Label(
+            stage_btn_frame,
+            text="🔴 H⁺: 0  |  🔵 OH⁻: 0  |  ⭕ H₂O: 0",
+            font=FONTS["small"],
+            fg=THEME.ACCENT_CYAN,
+            bg=THEME.BG_PANEL,
+            anchor="center",
+            pady=3
+        )
+        self.mini_particle_lbl.pack(fill=tk.X)
 
         # ----------------------------------------------------------------------
         # Center-Right Column: Instruments, Controls, and Live Curve
@@ -528,42 +590,42 @@ class VirtualTitrationApp(tk.Tk):
         inst_grid = ttk.Frame(inst_card)
         inst_grid.pack(fill=tk.X)
 
-        # Digital pH Display
-        ph_box = tk.Frame(inst_grid, bg="#090d16", padx=14, pady=8, bd=1, relief="solid")
+        # Digital pH Display (High-contrast electronic LCD screen)
+        ph_box = tk.Frame(inst_grid, bg="#0f172a", padx=14, pady=8, bd=1, relief="solid")
         ph_box.pack(side=tk.LEFT, padx=4)
-        tk.Label(ph_box, text="SOLUTION pH", font=FONTS["small"], fg=THEME.TEXT_MUTED, bg="#090d16").pack()
-        self.ph_display_lbl = tk.Label(ph_box, text="7.00", font=(FONT_FAMILY, 24, "bold"), fg=THEME.ACCENT_CYAN, bg="#090d16")
+        tk.Label(ph_box, text="SOLUTION pH", font=FONTS["small"], fg="#94a3b8", bg="#0f172a").pack()
+        self.ph_display_lbl = tk.Label(ph_box, text="7.00", font=(FONT_FAMILY, 24, "bold"), fg="#38bdf8", bg="#0f172a")
         self.ph_display_lbl.pack()
-        self.ph_condition_lbl = tk.Label(ph_box, text="Neutral", font=FONTS["small"], fg=THEME.TEXT_SECONDARY, bg="#090d16")
+        self.ph_condition_lbl = tk.Label(ph_box, text="Neutral", font=FONTS["small"], fg="#cbd5e1", bg="#0f172a")
         self.ph_condition_lbl.pack()
 
         # Digital pOH & Ionic Species
-        ions_box = tk.Frame(inst_grid, bg="#090d16", padx=12, pady=8, bd=1, relief="solid")
+        ions_box = tk.Frame(inst_grid, bg="#ffffff", padx=12, pady=8, bd=1, relief="solid")
         ions_box.pack(side=tk.LEFT, padx=4)
-        self.poh_lbl = tk.Label(ions_box, text="pOH: 7.00", font=FONTS["mono_bold"], fg=THEME.TEXT_PRIMARY, bg="#090d16")
+        self.poh_lbl = tk.Label(ions_box, text="pOH: 7.00", font=FONTS["mono_bold"], fg="#0f172a", bg="#ffffff")
         self.poh_lbl.pack(anchor="w")
-        self.h_conc_lbl = tk.Label(ions_box, text="[H+]:  1.00e-07 M", font=FONTS["mono"], fg=THEME.ACCENT_CYAN, bg="#090d16")
+        self.h_conc_lbl = tk.Label(ions_box, text="[H+]:  1.00e-07 M", font=FONTS["mono"], fg="#dc2626", bg="#ffffff")
         self.h_conc_lbl.pack(anchor="w")
-        self.oh_conc_lbl = tk.Label(ions_box, text="[OH-]: 1.00e-07 M", font=FONTS["mono"], fg=THEME.ACCENT_PINK, bg="#090d16")
+        self.oh_conc_lbl = tk.Label(ions_box, text="[OH-]: 1.00e-07 M", font=FONTS["mono"], fg="#2563eb", bg="#ffffff")
         self.oh_conc_lbl.pack(anchor="w")
 
         # Volumetric Burette Status
-        b_box = tk.Frame(inst_grid, bg="#090d16", padx=12, pady=8, bd=1, relief="solid")
+        b_box = tk.Frame(inst_grid, bg="#ffffff", padx=12, pady=8, bd=1, relief="solid")
         b_box.pack(side=tk.LEFT, padx=4, fill=tk.BOTH, expand=True)
-        self.b_delivered_lbl = tk.Label(b_box, text="Titrant Added: 0.00 mL", font=FONTS["mono_bold"], fg=THEME.ACCENT_CYAN, bg="#090d16")
+        self.b_delivered_lbl = tk.Label(b_box, text="Titrant Added: 0.00 mL", font=FONTS["mono_bold"], fg="#0284c7", bg="#ffffff")
         self.b_delivered_lbl.pack(anchor="w")
-        self.b_reading_lbl = tk.Label(b_box, text="Burette Mark:  0.00 mL (V1: 0.00)", font=FONTS["mono"], fg=THEME.TEXT_SECONDARY, bg="#090d16")
+        self.b_reading_lbl = tk.Label(b_box, text="Burette Mark:  0.00 mL (V1: 0.00)", font=FONTS["mono"], fg="#334155", bg="#ffffff")
         self.b_reading_lbl.pack(anchor="w")
-        self.flask_vol_lbl = tk.Label(b_box, text="Flask Total:   0.00 mL", font=FONTS["mono"], fg=THEME.TEXT_SECONDARY, bg="#090d16")
+        self.flask_vol_lbl = tk.Label(b_box, text="Flask Total:   0.00 mL", font=FONTS["mono"], fg="#334155", bg="#ffffff")
         self.flask_vol_lbl.pack(anchor="w")
 
         # Live Status Bar
         self.status_banner = tk.Label(
             inst_card,
-            text="STATUS: Standby. Please verify safety and pipette 25.00 mL HCl.",
+            text="STATUS: Standby. Please pipette 25.00 mL HCl into the conical flask.",
             font=FONTS["body_bold"],
-            fg=THEME.TEXT_PRIMARY,
-            bg=THEME.BG_PANEL_ALT,
+            fg="#0f172a",
+            bg="#f1f5f9",
             anchor="w",
             padx=8,
             pady=4
@@ -632,7 +694,7 @@ class VirtualTitrationApp(tk.Tk):
         custom_add_btn = ttk.Button(flow_row, text="Add", command=self._action_add_custom)
         custom_add_btn.pack(side=tk.LEFT, padx=4)
 
-        self.auto_flow_btn = ttk.Button(flow_row, text="Start Continuous Drop Flow", command=self._toggle_auto_flow)
+        self.auto_flow_btn = ttk.Button(flow_row, text="▶ Start Continuous Flow", command=self._toggle_auto_flow)
         self.auto_flow_btn.pack(side=tk.LEFT, padx=12)
 
         # Row 3: Embedded Matplotlib Titration Curve
@@ -652,165 +714,633 @@ class VirtualTitrationApp(tk.Tk):
         # Initial apparatus render
         self._render_workbench_apparatus()
 
+    def _particle_physics_loop(self) -> None:
+        """Periodic background Brownian motion and molecular reactions inside flask."""
+        try:
+            if not self.winfo_exists():
+                return
+            if self.show_particles_var.get() and not self.is_animating:
+                if len(self.flask_chamber.particles) > 0:
+                    self.flask_chamber.step(trapezoid_bottom_w=84)
+                    self._render_workbench_apparatus()
+        except Exception:
+            pass
+        self.after(60, self._particle_physics_loop)
+
     # --------------------------------------------------------------------------
     # Workbench Canvas Rendering
     # --------------------------------------------------------------------------
-    def _render_workbench_apparatus(self, drop_falling: bool = False, swirl_offset: int = 0) -> None:
-        """Render realistic burette, falling drops, and Erlenmeyer flask with dynamic liquid."""
+    def _render_workbench_apparatus(self, drop_falling: bool = False, swirl_offset: float = 0.0) -> None:
+        """Render realistic burette, falling drops, Erlenmeyer flask, and submicroscopic particles."""
         c = self.workbench_canvas
         c.delete("all")
-        w = c.winfo_width() or 280
-        h = c.winfo_height() or 460
+        w = c.winfo_width()
+        h = c.winfo_height()
+        if w < 50:
+            w = 280
+        if h < 50:
+            h = 460
 
         telemetry = self.titration_ctrl.get_telemetry()
         v_dispensed = telemetry.titrant_dispensed_ml
         color_hex = telemetry.color_hex
 
         # 1. Cast Iron Retort Stand
-        c_x = w // 2 - 20
-        c.create_rectangle(c_x - 70, h - 30, c_x + 70, h - 16, fill="#334155", outline="#64748b", width=1.5)
+        c_x = w // 2 - 15
+        c.create_rectangle(c_x - 70, h - 30, c_x + 70, h - 16, fill="#475569", outline="#334155", width=1.5)
         c.create_rectangle(c_x - 35, 20, c_x - 30, h - 30, fill="#94a3b8", outline="#64748b")
-        c.create_rectangle(c_x - 38, 80, c_x - 10, 92, fill="#475569", outline="#64748b")
+        c.create_rectangle(c_x - 38, 80, c_x - 10, 92, fill="#64748b", outline="#475569")
 
-        # 2. Precision Burette
+        # 2. Precision Volumetric Burette (Class-A 50.00 mL)
         bx = c_x
         b_top = 30
         b_bottom = 260
 
-        # Glass barrel
-        c.create_rectangle(bx - 10, b_top, bx + 10, b_bottom, fill="#0f172a", outline=THEME.GLASS_OUTLINE, width=1.5)
+        # Glass barrel (borosilicate glass)
+        c.create_rectangle(bx - 10, b_top, bx + 10, b_bottom, fill="#ffffff", outline=THEME.GLASS_OUTLINE, width=1.5)
 
         # Liquid column inside burette (drops as volume is dispensed)
-        # 50 mL = full span (b_bottom - b_top = 230 px)
         fraction_dispensed = min(1.0, v_dispensed / 50.0)
         liquid_meniscus_y = b_top + 10 + int(fraction_dispensed * 200)
 
         if liquid_meniscus_y < b_bottom - 10:
-            c.create_rectangle(bx - 8, liquid_meniscus_y, bx + 8, b_bottom - 6, fill="#38bdf8", outline="")
+            c.create_rectangle(bx - 8, liquid_meniscus_y, bx + 8, b_bottom - 6, fill="#0284c7", outline="")
             # Curved concave meniscus
-            c.create_arc(bx - 8, liquid_meniscus_y - 4, bx + 8, liquid_meniscus_y + 4, start=180, extent=180, outline="#38bdf8", width=1.5)
+            c.create_arc(bx - 8, liquid_meniscus_y - 4, bx + 8, liquid_meniscus_y + 4, start=180, extent=180, outline="#0284c7", width=1.5)
 
-        # Graduations and readings
+        # Graduations and markings
         for ml in range(0, 51, 5):
             gy = b_top + 10 + int((ml / 50.0) * 200)
-            c.create_line(bx - 9, gy, bx - 2, gy, fill="#cbd5e1", width=1)
-            c.create_text(bx - 16, gy, text=str(ml), fill="#94a3b8", font=(FONT_FAMILY, 7))
+            is_major = (ml % 10 == 0)
+            line_w = 7 if is_major else 4
+            c.create_line(bx - 9, gy, bx - 9 + line_w, gy, fill="#475569", width=1.2 if is_major else 1.0)
+            if is_major:
+                c.create_text(bx - 17, gy, text=str(ml), fill="#1e293b", font=(FONT_FAMILY, 7, "bold"))
 
-        # Stopcock
+        # Stopcock Valve (dynamic orientation: vertical when open/flowing, horizontal when closed)
         c.create_polygon(bx - 6, b_bottom - 6, bx + 6, b_bottom - 6, bx + 4, b_bottom + 4, bx - 4, b_bottom + 4, fill="#64748b", outline=THEME.GLASS_OUTLINE)
-        valve_color = THEME.ACCENT_CYAN if not drop_falling else "#f59e0b"
-        c.create_rectangle(bx - 14, b_bottom - 3, bx + 14, b_bottom + 1, fill=valve_color, outline="#ffffff")
+        is_valve_open = self.anim_stopcock_open or self.is_continuous_flow or drop_falling
+        if is_valve_open:
+            # Valve turned open (vertical with amber highlight)
+            c.create_rectangle(bx - 3, b_bottom - 12, bx + 3, b_bottom + 12, fill="#f59e0b", outline="#334155", width=1.5)
+        else:
+            # Valve closed (horizontal)
+            c.create_rectangle(bx - 14, b_bottom - 3, bx + 14, b_bottom + 1, fill=THEME.ACCENT_CYAN, outline="#334155")
+
         # Jet tip
-        c.create_polygon(bx - 4, b_bottom + 4, bx + 4, b_bottom + 4, bx, b_bottom + 22, fill="#0f172a", outline=THEME.GLASS_OUTLINE)
+        jet_tip_y = b_bottom + 22
+        c.create_polygon(bx - 4, b_bottom + 4, bx + 4, b_bottom + 4, bx, jet_tip_y, fill="#ffffff", outline=THEME.GLASS_OUTLINE)
 
-        # Falling Drop Animation
-        if drop_falling:
-            drop_y = b_bottom + 35
-            c.create_oval(bx - 2, drop_y, bx + 2, drop_y + 5, fill="#38bdf8", outline="")
-
-        # 3. Conical Flask (Erlenmeyer)
-        fx = bx + swirl_offset
+        # 3. Continuous Titrant Liquid Stream Animation (Streaming Tap)
+        effective_swirl = swirl_offset if swirl_offset != 0 else self.anim_swirl_offset
+        fx = bx + effective_swirl
         f_top = b_bottom + 45
         f_base = h - 35
         f_neck_top = f_top - 16
 
+        flask_snapshot = self.titration_ctrl.flask.get_snapshot()
+        has_liquid = flask_snapshot.has_acid or (self.anim_flask_fill_frac > 0.05)
+        effective_vol = flask_snapshot.total_volume_ml if flask_snapshot.has_acid else (25.0 * self.anim_flask_fill_frac)
+        frac = min(1.0, max(0.05, effective_vol / 60.0))
+        liq_top_y = f_base - 12 - int(frac * 42)
+        liq_w = 22 + int(frac * 18)
+
+        if self.is_continuous_flow:
+            self.anim_flow_tick = getattr(self, "anim_flow_tick", 0) + 1
+            tick = self.anim_flow_tick
+
+            # Continuous pouring stream column (wavering stream like a lab tap)
+            stream_w = 3.6 + 0.5 * math.sin(tick * 0.9)
+            c.create_line(bx, jet_tip_y, fx, liq_top_y, fill="#0284c7", width=stream_w, smooth=True)
+            c.create_line(bx, jet_tip_y, fx, liq_top_y, fill="#bae6fd", width=1.5, smooth=True)
+
+            # Rapid continuous droplets/beads cascading down like water running from a tap
+            total_dist = max(15.0, float(liq_top_y - jet_tip_y))
+            num_beads = 4
+            for bi in range(num_beads):
+                phase = (tick * 0.22 + bi / float(num_beads)) % 1.0
+                bead_y = jet_tip_y + total_dist * (phase ** 1.35)
+                t_ratio = (bead_y - jet_tip_y) / total_dist
+                bead_x = bx + (fx - bx) * t_ratio
+
+                if jet_tip_y + 4 < bead_y < liq_top_y - 2:
+                    c.create_oval(
+                        bead_x - 3.2, bead_y - 5.5,
+                        bead_x + 3.2, bead_y + 5.5,
+                        fill="#0284c7", outline="#38bdf8", width=1
+                    )
+                    c.create_oval(
+                        bead_x - 1.2, bead_y - 2.5,
+                        bead_x + 1.2, bead_y + 1.5,
+                        fill="#ffffff", outline=""
+                    )
+
+            # Dynamic entry splash bubbles & micro-droplets splashing at the liquid surface
+            c.create_oval(fx - 5, liq_top_y - 3, fx + 5, liq_top_y + 3, fill="#bae6fd", outline="#0284c7")
+            for si, angle in enumerate([-0.65, 0.65]):
+                splash_dy = -4.0 - 3.5 * abs(math.sin(tick * 0.6 + si))
+                splash_dx = angle * (5.0 + 3.0 * abs(math.cos(tick * 0.6 + si)))
+                c.create_oval(
+                    fx + splash_dx - 1.5, liq_top_y + splash_dy - 1.5,
+                    fx + splash_dx + 1.5, liq_top_y + splash_dy + 1.5,
+                    fill="#38bdf8", outline="#0284c7"
+                )
+
+        # 4. Falling NaOH Droplet Animation (Single Drop & Multi-Drop Burst Additions)
+        active_drop_y = self.anim_drop_y if self.anim_drop_y is not None else (jet_tip_y + 12 if drop_falling else None)
+        if active_drop_y is not None and not self.is_continuous_flow:
+            drop_count = getattr(self, "anim_drop_count", 1)
+            for di in range(drop_count):
+                dy = active_drop_y - di * 16.0
+                if jet_tip_y + 2 < dy < liq_top_y + 4:
+                    c.create_polygon(
+                        bx - 3, dy - 5,
+                        bx + 3, dy - 5,
+                        bx + 3.5, dy,
+                        bx, dy + 7,
+                        bx - 3.5, dy,
+                        fill="#0284c7", outline="#38bdf8", width=1
+                    )
+                    c.create_oval(bx - 1, dy - 2, bx + 1, dy + 1, fill="#ffffff", outline="")
+
+        # 5. Volumetric Bulb Pipette (Animated pouring of 25.00 mL HCl)
+        if self.anim_pipette_visible:
+            py = self.anim_pipette_y
+            px = bx + 22
+
+            # Glass pipette body
+            c.create_rectangle(px - 3, py - 180, px + 3, py - 90, fill="#ffffff", outline=THEME.GLASS_OUTLINE)
+            # Calibration ring mark (25.00 mL)
+            c.create_line(px - 6, py - 140, px + 6, py - 140, fill=THEME.ACCENT_EMERALD, width=2)
+            c.create_text(px + 26, py - 140, text="25 mL", fill=THEME.ACCENT_EMERALD, font=(FONT_FAMILY, 7, "bold"))
+
+            # Bulb
+            c.create_oval(px - 13, py - 90, px + 13, py - 30, fill="#ffffff", outline=THEME.GLASS_OUTLINE, width=1.5)
+
+            # Liquid in bulb
+            if self.anim_pipette_liquid_level > 0.05:
+                lvl = self.anim_pipette_liquid_level
+                bulb_h = int(50 * lvl)
+                c.create_oval(px - 10, py - 35 - bulb_h, px + 10, py - 35, fill="#e0f2fe", outline="")
+
+            # Pipette jet tip
+            c.create_polygon(
+                px - 3, py - 30, px + 3, py - 30,
+                px - 1, py, px + 1, py,
+                fill="#ffffff", outline=THEME.GLASS_OUTLINE
+            )
+
+            # Pouring liquid stream into conical flask
+            if self.anim_pipette_stream:
+                target_surface_y = h - 35 - 12 - int(self.anim_flask_fill_frac * 25)
+                c.create_line(px, py, bx, target_surface_y, fill="#0284c7", width=2.5)
+                c.create_line(px, py, bx, target_surface_y, fill="#bae6fd", width=1.0)
+                c.create_oval(bx - 3, target_surface_y - 2, bx + 3, target_surface_y + 2, fill="#bae6fd", outline="#0284c7")
+
+        # 6. Phenolphthalein Indicator Dropper Animation
+        if self.anim_indicator_dropper_visible:
+            dx = bx + 16
+            dy = self.anim_indicator_y
+
+            # Rubber squeeze bulb
+            c.create_oval(dx - 9, dy - 60, dx + 9, dy - 38, fill="#db2777", outline="#9d174d", width=1.5)
+            # Glass dropper tube
+            c.create_rectangle(dx - 3.5, dy - 38, dx + 3.5, dy - 10, fill="#ffffff", outline="#475569")
+            # Pink indicator liquid in dropper
+            c.create_rectangle(dx - 2, dy - 32, dx + 2, dy - 6, fill="#f472b6", outline="")
+            # Tapered jet tip
+            c.create_polygon(dx - 3.5, dy - 10, dx + 3.5, dy - 10, dx, dy, fill="#ffffff", outline="#475569")
+            c.create_text(dx + 28, dy - 48, text="Indicator", fill="#db2777", font=(FONT_FAMILY, 7, "bold"))
+
+            # Falling Pink Indicator Droplets
+            for drop in self.anim_indicator_drops:
+                c.create_oval(drop["x"] - 3.5, drop["y"] - 5, drop["x"] + 3.5, drop["y"] + 5, fill="#db2777", outline="#f472b6")
+
+        # 7. Conical Flask (Erlenmeyer)
         # Neck
-        c.create_rectangle(fx - 10, f_neck_top, fx + 10, f_top, fill="#0f172a", outline=THEME.GLASS_OUTLINE, width=1.5)
-        # Body
+        c.create_rectangle(fx - 10, f_neck_top, fx + 10, f_top, fill="#ffffff", outline=THEME.GLASS_OUTLINE, width=1.5)
+        # Conical Body
         c.create_polygon(
             fx - 10, f_top, fx + 10, f_top,
             fx + 45, f_base, fx - 45, f_base,
-            fill="#0f172a", outline=THEME.GLASS_OUTLINE, width=1.5
+            fill="#ffffff", outline=THEME.GLASS_OUTLINE, width=1.5
         )
 
-        # Liquid in Flask
-        flask_snapshot = self.titration_ctrl.flask.get_snapshot()
-        if flask_snapshot.has_acid:
-            # Volume scales from 25 mL to ~60 mL
-            vol = flask_snapshot.total_volume_ml
-            frac = min(1.0, (vol - 25.0) / 40.0)
-            liq_top_y = f_base - 25 - int(frac * 30)
-            liq_w = 26 + int(frac * 14)
+        # PTFE Magnetic Stir Bar on flask floor
+        c.create_oval(fx - 9, f_base - 5, fx + 9, f_base - 1, fill="#f1f5f9", outline="#94a3b8")
 
+        # 8. Liquid in Flask
+        if has_liquid and effective_vol > 0.5:
+            slosh = self.anim_swirl_slosh
+
+            # Liquid polygon with dynamic slosh wave
             c.create_polygon(
-                fx - liq_w, liq_top_y, fx + liq_w, liq_top_y,
-                fx + 43, f_base - 2, fx - 43, f_base - 2,
-                fill=color_hex, outline="", stipple="gray75" if color_hex == THEME.LIQUID_HCL_CLEAR else ""
+                fx - liq_w, liq_top_y - slosh,
+                fx + liq_w, liq_top_y + slosh,
+                fx + 43, f_base - 2,
+                fx - 43, f_base - 2,
+                fill=color_hex, outline="",
+                stipple="gray75" if color_hex == THEME.LIQUID_HCL_CLEAR else ""
             )
             # Meniscus surface line
-            c.create_line(fx - liq_w, liq_top_y, fx + liq_w, liq_top_y, fill=color_hex, width=1.5)
+            c.create_line(
+                fx - liq_w, liq_top_y - slosh,
+                fx + liq_w, liq_top_y + slosh,
+                fill="#0284c7" if color_hex == THEME.LIQUID_HCL_CLEAR else color_hex,
+                width=1.5
+            )
+
+            # Surface Impact Waves & Ripples
+            for rp in self.anim_ripples:
+                r = rp.get("r", 2.0)
+                rip_color = rp.get("color", "#0284c7")
+                c.create_oval(
+                    fx - r, liq_top_y - r * 0.35,
+                    fx + r, liq_top_y + r * 0.35,
+                    outline=rip_color, width=1.5
+                )
+
+            # Localized Pink Flash / Bloom (Drop impact zone before swirling)
+            if self.anim_pink_bloom_r > 0.5:
+                br = self.anim_pink_bloom_r
+                c.create_oval(
+                    fx - br, liq_top_y + 4 - br * 0.45,
+                    fx + br, liq_top_y + 4 + br * 0.45,
+                    fill="#f472b6", outline="#db2777", stipple="gray50"
+                )
+                c.create_text(
+                    fx, liq_top_y + 6,
+                    text="Mixing...",
+                    fill="#831843",
+                    font=(FONT_FAMILY, 7, "bold")
+                )
+
+            # 9. Submicroscopic Molecular Reaction Particles inside Flask
+            if self.show_particles_var.get():
+                self.flask_chamber.set_bounds(fx - liq_w + 6, liq_top_y + 6, fx + liq_w - 6, f_base - 7)
+
+                # Render Neutralization Energy Sparkles
+                for sp in self.flask_chamber.sparkles:
+                    sr = sp.get("radius", 3.0)
+                    c.create_oval(
+                        sp["x"] - sr, sp["y"] - sr, sp["x"] + sr, sp["y"] + sr,
+                        outline="#0284c7", width=1.5
+                    )
+                    c.create_line(sp["x"] - sr * 1.5, sp["y"], sp["x"] + sr * 1.5, sp["y"], fill="#0f172a", width=1)
+                    c.create_line(sp["x"], sp["y"] - sr * 1.5, sp["x"], sp["y"] + sr * 1.5, fill="#0f172a", width=1)
+
+                # Render Particles (H+, OH-, H2O, Na+, Cl-)
+                for p in self.flask_chamber.particles:
+                    pr = p.radius
+                    if p.p_type == 'H2O':
+                        c.create_oval(p.x - pr, p.y - pr, p.x + pr, p.y + pr, fill="#e0f2fe", outline="#0284c7", width=1.5)
+                        c.create_oval(p.x - pr - 1, p.y - 2, p.x - pr + 1, p.y, fill="#ffffff", outline="#0284c7")
+                        c.create_oval(p.x + pr - 1, p.y - 2, p.x + pr + 1, p.y, fill="#ffffff", outline="#0284c7")
+                        c.create_text(p.x, p.y, text="H₂O", font=(FONT_FAMILY, 5, "bold"), fill="#0369a1")
+                    else:
+                        c.create_oval(p.x - pr, p.y - pr, p.x + pr, p.y + pr, fill=p.color, outline="#334155", width=1)
+                        c.create_text(p.x, p.y, text=p.label, font=(FONT_FAMILY, 5, "bold"), fill=p.text_color)
+
+                # Update live particle stoichiometry badge
+                if hasattr(self, 'mini_particle_lbl'):
+                    cnts = self.flask_chamber.get_counts()
+                    self.mini_particle_lbl.config(
+                        text=f"🔴 H⁺: {cnts['H']}  |  🔵 OH⁻: {cnts['OH']}  |  ⭕ H₂O: {cnts['H2O']}  |  Na⁺: {cnts['Na']}"
+                    )
 
         # Flask Volume & Status Text
-        c.create_text(fx, f_base + 14, text=f"Flask: {flask_snapshot.total_volume_ml:.1f} mL", fill=THEME.TEXT_SECONDARY, font=FONTS["small"])
+        c.create_text(
+            fx, f_base + 14,
+            text=f"Flask: {effective_vol:.2f} mL",
+            fill=THEME.TEXT_PRIMARY,
+            font=FONTS["body_bold"]
+        )
 
     # --------------------------------------------------------------------------
     # Workbench Actions & Handlers
     # --------------------------------------------------------------------------
     def _action_pipette_acid(self) -> None:
         if not self.is_safety_verified:
-            messagebox.showwarning("Safety Incomplete", "Please complete the mandatory safety checklist in Tab 2 before pipetting chemicals.")
-            self.notebook.select(self.tab_safety)
+            if messagebox.askyesno(
+                "Safety Protocol Verification",
+                "Laboratory safety protocol requires PPE verification.\n\n"
+                "Would you like to automatically verify all safety checks and proceed?"
+            ):
+                self._verify_all_safety_fast()
+            else:
+                self.notebook.select(self.tab_safety)
+                return
+
+        if self.is_animating:
             return
 
-        try:
-            self.titration_ctrl.pipette_acid()
+        if self.titration_ctrl.flask.has_acid:
+            if not messagebox.askyesno("Re-pipette Acid", "The flask already contains acid. Do you want to empty and re-pipette 25.00 mL fresh HCl?"):
+                return
+            self._action_new_trial()
+
+        self._start_pipette_pour_animation()
+
+    def _start_pipette_pour_animation(self) -> None:
+        self.is_animating = True
+        self.anim_pipette_visible = True
+        self.anim_pipette_liquid_level = 1.0
+        self.anim_pipette_stream = False
+        self.anim_flask_fill_frac = 0.0
+        self.flask_chamber.reset()
+
+        total_frames = 26
+
+        def step_anim(frame: int):
+            if frame <= 7:
+                t = frame / 7.0
+                self.anim_pipette_y = 120.0 + (285.0 - 120.0) * t
+                self.anim_pipette_stream = False
+            elif frame <= 19:
+                self.anim_pipette_y = 285.0
+                self.anim_pipette_stream = True
+                p = (frame - 7) / 12.0
+                self.anim_pipette_liquid_level = max(0.0, 1.0 - p)
+                self.anim_flask_fill_frac = min(1.0, p)
+                if frame % 3 == 0:
+                    self.flask_chamber.add_acid(count=3)
+                self.anim_ripples.append({"r": 3.0, "max_r": 18.0, "color": "#0284c7"})
+            else:
+                self.anim_pipette_stream = False
+                self.anim_pipette_liquid_level = 0.0
+                self.anim_flask_fill_frac = 1.0
+                t = (frame - 19) / 6.0
+                self.anim_pipette_y = 285.0 - (285.0 - 100.0) * t
+
+            for rp in self.anim_ripples:
+                rp["r"] += 2.5
+            self.anim_ripples = [rp for rp in self.anim_ripples if rp["r"] < rp.get("max_r", 20.0)]
+
             self._render_workbench_apparatus()
-            messagebox.showinfo("Acid Transferred", "Successfully pipetted exactly 25.00 mL of unknown HCl into the conical flask.")
-        except Exception as err:
-            messagebox.showerror("Error", str(err))
+
+            if frame < total_frames:
+                self.after(35, lambda: step_anim(frame + 1))
+            else:
+                self.anim_pipette_visible = False
+                self.anim_flask_fill_frac = 1.0
+                self.is_animating = False
+                self.titration_ctrl.pipette_acid()
+                if len(self.flask_chamber.particles) < 12:
+                    self.flask_chamber.add_acid(count=12 - len(self.flask_chamber.particles) // 2)
+                self._render_workbench_apparatus()
+                messagebox.showinfo(
+                    "Acid Transferred",
+                    "Successfully pipetted exactly 25.00 mL of unknown HCl into the conical flask.\n"
+                    "Submicroscopic view: Aqueous H⁺ (red) and Cl⁻ (green) ions are now in solution."
+                )
+
+        step_anim(0)
 
     def _action_add_indicator(self) -> None:
         if not self.titration_ctrl.flask.has_acid:
             messagebox.showwarning("Empty Flask", "Please pipette 25.00 mL HCl into the flask first before adding indicator.")
             return
 
-        self.titration_ctrl.add_indicator(2)
-        self._render_workbench_apparatus()
-        messagebox.showinfo("Indicator Added", "Added 2 drops of phenolphthalein indicator to the flask. Ready for titration.")
+        if self.is_animating:
+            return
+
+        self._start_indicator_animation()
+
+    def _start_indicator_animation(self) -> None:
+        self.is_animating = True
+        self.anim_indicator_dropper_visible = True
+        self.anim_indicator_y = 120.0
+        self.anim_indicator_drops = []
+
+        c = self.workbench_canvas
+        w = c.winfo_width() or 280
+        h = c.winfo_height() or 460
+        bx = w // 2 - 15
+        dx = bx + 16
+        target_y = 250.0
+
+        flask_snapshot = self.titration_ctrl.flask.get_snapshot()
+        vol = flask_snapshot.total_volume_ml if flask_snapshot.has_acid else 25.0
+        frac = min(1.0, max(0.05, vol / 60.0))
+        f_base = h - 35
+        liq_top_y = f_base - 12 - int(frac * 42)
+
+        total_frames = 28
+
+        def step_anim(frame: int):
+            if frame <= 7:
+                t = frame / 7.0
+                self.anim_indicator_y = 120.0 + (target_y - 120.0) * t
+            elif frame <= 14:
+                self.anim_indicator_y = target_y
+                if frame == 8:
+                    self.anim_indicator_drops = [{"x": dx, "y": target_y}]
+                elif self.anim_indicator_drops:
+                    t = (frame - 8) / 6.0
+                    self.anim_indicator_drops[0]["y"] = target_y + (liq_top_y - target_y) * (t ** 1.6)
+                    if frame == 14:
+                        self.anim_indicator_drops.clear()
+                        self.anim_ripples.append({"r": 3.0, "max_r": 18.0, "color": "#db2777"})
+                        self.anim_pink_bloom_r = 12.0
+            elif frame <= 21:
+                self.anim_indicator_y = target_y
+                if frame == 15:
+                    self.anim_indicator_drops = [{"x": dx, "y": target_y}]
+                elif self.anim_indicator_drops:
+                    t = (frame - 15) / 6.0
+                    self.anim_indicator_drops[0]["y"] = target_y + (liq_top_y - target_y) * (t ** 1.6)
+                    if frame == 21:
+                        self.anim_indicator_drops.clear()
+                        self.anim_ripples.append({"r": 3.0, "max_r": 22.0, "color": "#db2777"})
+                        self.anim_pink_bloom_r = 18.0
+            else:
+                self.anim_indicator_drops.clear()
+                t = (frame - 21) / 7.0
+                self.anim_indicator_y = target_y - (target_y - 100.0) * t
+
+            for rp in self.anim_ripples:
+                rp["r"] += 2.0
+            self.anim_ripples = [rp for rp in self.anim_ripples if rp["r"] < rp.get("max_r", 20.0)]
+            self.anim_pink_bloom_r = max(0.0, self.anim_pink_bloom_r - 1.2)
+
+            self._render_workbench_apparatus()
+
+            if frame < total_frames:
+                self.after(35, lambda: step_anim(frame + 1))
+            else:
+                self.anim_indicator_dropper_visible = False
+                self.anim_indicator_drops.clear()
+                self.anim_pink_bloom_r = 0.0
+                self.is_animating = False
+                self.titration_ctrl.add_indicator(2)
+                self._render_workbench_apparatus()
+                self.status_banner.config(
+                    text="STATUS: Added 2 drops phenolphthalein indicator. Colorless in acid. Ready for titration!"
+                )
+                messagebox.showinfo(
+                    "Indicator Added",
+                    "Added 2 drops of phenolphthalein indicator to the conical flask.\n"
+                    "Observation: Solution remains clear (colorless in acid).\n"
+                    "At the equivalence point, a persistent faint blush pink will appear."
+                )
+
+        step_anim(0)
 
     def _action_swirl(self) -> None:
-        # Subtle swirl animation
-        def anim(step):
-            offsets = [0, 6, -6, 4, -4, 2, 0]
-            if step < len(offsets):
-                self._render_workbench_apparatus(swirl_offset=offsets[step])
-                self.after(50, lambda: anim(step + 1))
+        if self.is_animating:
+            return
+        self.is_animating = True
+
+        total_frames = 16
+
+        def swirl_step(step: int):
+            if step < total_frames:
+                decay = math.exp(-step / 7.0)
+                self.anim_swirl_offset = 12.0 * math.sin(2.0 * math.pi * step / 5.0) * decay
+                self.anim_swirl_slosh = 5.0 * math.cos(2.0 * math.pi * step / 5.0) * decay
+
+                self.anim_pink_bloom_r = max(0.0, self.anim_pink_bloom_r - 3.5)
+
+                for p in self.flask_chamber.particles:
+                    p.vx += random.uniform(-0.6, 0.6)
+                    p.vy += random.uniform(-0.4, 0.4)
+                self.flask_chamber.step(trapezoid_bottom_w=84)
+
+                self._render_workbench_apparatus()
+                self.after(35, lambda: swirl_step(step + 1))
             else:
+                self.anim_swirl_offset = 0.0
+                self.anim_swirl_slosh = 0.0
+                self.anim_pink_bloom_r = 0.0
+                self.is_animating = False
                 self.titration_ctrl.swirl_flask()
                 self._render_workbench_apparatus()
 
-        anim(0)
+        swirl_step(0)
 
     def _action_dispense(self, vol_ml: float) -> None:
         if not self.is_safety_verified:
-            messagebox.showwarning("Safety Required", "Safety verification must be completed prior to titrant dispensing.")
-            self.notebook.select(self.tab_safety)
+            self._verify_all_safety_fast()
+
+        if not self.titration_ctrl.flask.has_acid:
+            self.titration_ctrl.pipette_acid()
+            if len(self.flask_chamber.particles) < 12:
+                self.flask_chamber.add_acid(count=8)
+
+        if self.titration_ctrl.flask.indicator_drops == 0:
+            self.titration_ctrl.add_indicator(2)
+
+        if self.is_animating and not self.is_continuous_flow:
+            try:
+                actual = self.titration_ctrl.dispense_titrant(vol_ml)
+                if actual > 0:
+                    tel = self.titration_ctrl.get_telemetry()
+                    self.curve_plotter.add_experimental_point(tel.titrant_dispensed_ml, tel.ph)
+                    if tel.is_endpoint:
+                        self.curve_plotter.mark_endpoint(tel.titrant_dispensed_ml, tel.ph)
+                    self.curve_plotter.redraw()
+                    self.graph_canvas.draw_idle()
+                    self.flask_chamber.add_base(count=max(2, min(8, int(vol_ml * 30))))
+                    self._render_workbench_apparatus()
+            except Exception as err:
+                messagebox.showerror("Titration Error", str(err))
             return
 
-        try:
-            actual = self.titration_ctrl.dispense_titrant(vol_ml)
-            if actual > 0:
-                tel = self.titration_ctrl.get_telemetry()
-                # Record to curve
-                self.curve_plotter.add_experimental_point(tel.titrant_dispensed_ml, tel.ph)
-                if tel.is_endpoint:
-                    self.curve_plotter.mark_endpoint(tel.titrant_dispensed_ml, tel.ph)
-                self.curve_plotter.redraw()
-                self.graph_canvas.draw_idle()
+        self._start_drop_dispense_animation(vol_ml)
 
-                # Animation
-                self._render_workbench_apparatus(drop_falling=True)
-                self.after(80, lambda: self._render_workbench_apparatus(drop_falling=False))
+    def _start_drop_dispense_animation(self, vol_ml: float) -> None:
+        self.is_animating = True
+        self.anim_stopcock_open = True
+        self.anim_drop_count = 3 if vol_ml >= 0.50 else (2 if vol_ml >= 0.10 else 1)
 
-                # Check if endpoint reached or overtitrated
-                if tel.status == ExperimentStatus.ENDPOINT_REACHED:
-                    messagebox.showinfo("Endpoint Detected", f"ENDPOINT REACHED!\nPersistent faint blush pink observed at {tel.titrant_dispensed_ml:.2f} mL (pH {tel.ph:.2f}).\nPlease record this trial.")
-                elif tel.status == ExperimentStatus.OVERTITRATED:
-                    messagebox.showwarning("Over-titrated", f"Solution has turned deep pink at {tel.titrant_dispensed_ml:.2f} mL (pH {tel.ph:.2f}). Excess NaOH has been added.")
+        c = self.workbench_canvas
+        w = c.winfo_width()
+        h = c.winfo_height()
+        if w < 50:
+            w = 280
+        if h < 50:
+            h = 460
+        bx = w // 2 - 15
+        jet_y = 260 + 22  # 282
 
-        except Exception as err:
-            self._stop_auto_flow()
-            messagebox.showerror("Titration Error", str(err))
+        flask_snapshot = self.titration_ctrl.flask.get_snapshot()
+        vol = flask_snapshot.total_volume_ml
+        frac = min(1.0, (vol - 25.0) / 40.0)
+        f_base = h - 35
+        liq_top_y = f_base - 12 - int(frac * 42)
+
+        drop_frames = 8
+
+        def drop_step(frame: int):
+            if frame <= drop_frames:
+                t = frame / float(drop_frames)
+                self.anim_drop_y = jet_y + (liq_top_y - jet_y) * (t ** 1.7)
+                self._render_workbench_apparatus()
+                self.after(20, lambda: drop_step(frame + 1))
+            else:
+                self.anim_drop_y = None
+                self.anim_stopcock_open = False
+
+                try:
+                    actual = self.titration_ctrl.dispense_titrant(vol_ml)
+                    if actual > 0:
+                        tel = self.titration_ctrl.get_telemetry()
+                        self.curve_plotter.add_experimental_point(tel.titrant_dispensed_ml, tel.ph)
+                        if tel.is_endpoint:
+                            self.curve_plotter.mark_endpoint(tel.titrant_dispensed_ml, tel.ph)
+                        self.curve_plotter.redraw()
+                        self.graph_canvas.draw_idle()
+
+                        self.anim_ripples.append({"r": 3.0, "max_r": 24.0, "color": "#0284c7"})
+                        self.anim_pink_bloom_r = min(22.0, 10.0 + vol_ml * 15.0)
+
+                        num_base = max(2, min(8, int(vol_ml * 30)))
+                        self.flask_chamber.add_base(count=num_base)
+
+                        self._run_dispersion_frames(post_status=tel)
+                    else:
+                        self.is_animating = False
+                        self._render_workbench_apparatus()
+                except Exception as err:
+                    self.is_animating = False
+                    self._stop_auto_flow()
+                    messagebox.showerror("Titration Error", str(err))
+
+        drop_step(0)
+
+    def _run_dispersion_frames(self, post_status: TitrationTelemetry, frame: int = 0) -> None:
+        max_disp_frames = 5
+        if frame < max_disp_frames:
+            for rp in self.anim_ripples:
+                rp["r"] += 3.5
+            self.anim_ripples = [rp for rp in self.anim_ripples if rp["r"] < rp.get("max_r", 24.0)]
+
+            self.anim_pink_bloom_r = max(0.0, self.anim_pink_bloom_r - 2.5)
+
+            self.flask_chamber.step(trapezoid_bottom_w=84)
+            self._render_workbench_apparatus()
+            self.after(30, lambda: self._run_dispersion_frames(post_status, frame + 1))
+        else:
+            self.anim_ripples.clear()
+            self.is_animating = False
+            self._render_workbench_apparatus()
+
+            if post_status.status == ExperimentStatus.ENDPOINT_REACHED:
+                self._stop_auto_flow()
+                messagebox.showinfo(
+                    "Endpoint Detected",
+                    f"ENDPOINT REACHED!\n"
+                    f"Persistent faint blush pink observed at {post_status.titrant_dispensed_ml:.2f} mL (pH {post_status.ph:.2f}).\n"
+                    f"Molecular view: All H⁺ ions neutralized to H₂O molecules.\n"
+                    f"Please record this trial."
+                )
+            elif post_status.status == ExperimentStatus.OVERTITRATED:
+                self._stop_auto_flow()
+                messagebox.showwarning(
+                    "Over-titrated",
+                    f"Solution has turned deep pink at {post_status.titrant_dispensed_ml:.2f} mL (pH {post_status.ph:.2f}).\n"
+                    f"Excess unreacted OH⁻ ions are present."
+                )
 
     def _action_add_custom(self) -> None:
         try:
@@ -822,30 +1352,114 @@ class VirtualTitrationApp(tk.Tk):
             messagebox.showerror("Invalid Volume", f"Please enter a valid positive number: {err}")
 
     def _toggle_auto_flow(self) -> None:
-        if self.auto_flow_job:
+        if not self.is_safety_verified:
+            self._verify_all_safety_fast()
+
+        if not self.titration_ctrl.flask.has_acid:
+            self.titration_ctrl.pipette_acid()
+            if len(self.flask_chamber.particles) < 12:
+                self.flask_chamber.add_acid(count=8)
+
+        if self.titration_ctrl.flask.indicator_drops == 0:
+            self.titration_ctrl.add_indicator(2)
+
+        if self.is_continuous_flow:
             self._stop_auto_flow()
         else:
-            self.auto_flow_btn.config(text="Stop Continuous Flow")
-            self._run_auto_flow_step()
+            self.is_continuous_flow = True
+            self.anim_stopcock_open = True
+            self.auto_flow_btn.config(text="⏹ Stop Continuous Flow")
+            self._render_workbench_apparatus()
+            self._run_continuous_flow_step()
 
-    def _run_auto_flow_step(self) -> None:
+    def _run_continuous_flow_step(self) -> None:
+        if not self.is_continuous_flow:
+            return
+
         tel = self.titration_ctrl.get_telemetry()
         if tel.status in (ExperimentStatus.ENDPOINT_REACHED, ExperimentStatus.OVERTITRATED):
             self._stop_auto_flow()
+            if tel.status == ExperimentStatus.ENDPOINT_REACHED:
+                messagebox.showinfo(
+                    "Endpoint Reached!",
+                    f"ENDPOINT REACHED!\n"
+                    f"Persistent faint blush pink observed at {tel.titrant_dispensed_ml:.2f} mL (pH {tel.ph:.2f}).\n"
+                    f"Stopcock closed automatically.\n"
+                    f"Please record this trial in the results table."
+                )
             return
 
-        # Dispense fine drop (0.05 mL)
-        self._action_dispense(0.05)
-        self.auto_flow_job = self.after(250, self._run_auto_flow_step)
+        # Adaptive flow rate: 0.10 mL per step in rough mode, 0.05 mL in accurate mode
+        step_vol = 0.10 if tel.mode == TitrationMode.ROUGH else 0.05
+
+        try:
+            actual = self.titration_ctrl.dispense_titrant(step_vol)
+            if actual > 0:
+                post_tel = self.titration_ctrl.get_telemetry()
+                self.curve_plotter.add_experimental_point(post_tel.titrant_dispensed_ml, post_tel.ph)
+                if post_tel.is_endpoint:
+                    self.curve_plotter.mark_endpoint(post_tel.titrant_dispensed_ml, post_tel.ph)
+                self.curve_plotter.redraw()
+                self.graph_canvas.draw_idle()
+
+                # Fluid ripples and live particles
+                self.anim_ripples.append({"r": 3.0, "max_r": 18.0, "color": "#0284c7"})
+                for rp in self.anim_ripples:
+                    rp["r"] += 2.0
+                self.anim_ripples = [rp for rp in self.anim_ripples if rp["r"] < rp.get("max_r", 18.0)]
+
+                self.flask_chamber.add_base(count=2)
+                self.flask_chamber.step(trapezoid_bottom_w=84)
+                self._render_workbench_apparatus()
+
+                if post_tel.status in (ExperimentStatus.ENDPOINT_REACHED, ExperimentStatus.OVERTITRATED):
+                    self._stop_auto_flow()
+                    if post_tel.status == ExperimentStatus.ENDPOINT_REACHED:
+                        messagebox.showinfo(
+                            "Endpoint Reached!",
+                            f"ENDPOINT REACHED!\n"
+                            f"Persistent faint blush pink observed at {post_tel.titrant_dispensed_ml:.2f} mL (pH {post_tel.ph:.2f}).\n"
+                            f"Stopcock closed automatically.\n"
+                            f"Please record this trial in the results table."
+                        )
+                    elif post_tel.status == ExperimentStatus.OVERTITRATED:
+                        messagebox.showwarning(
+                            "Over-titrated",
+                            f"Solution has turned deep magenta at {post_tel.titrant_dispensed_ml:.2f} mL (pH {post_tel.ph:.2f}).\n"
+                            f"Stopcock closed."
+                        )
+                    return
+        except Exception as err:
+            self._stop_auto_flow()
+            messagebox.showerror("Titration Error", str(err))
+            return
+
+        self.auto_flow_job = self.after(65, self._run_continuous_flow_step)
 
     def _stop_auto_flow(self) -> None:
+        self.is_continuous_flow = False
+        self.anim_stopcock_open = False
         if self.auto_flow_job:
             self.after_cancel(self.auto_flow_job)
             self.auto_flow_job = None
-        self.auto_flow_btn.config(text="Start Continuous Drop Flow")
+        self.auto_flow_btn.config(text="▶ Start Continuous Flow")
+        self._render_workbench_apparatus()
 
     def _action_new_trial(self) -> None:
         self._stop_auto_flow()
+        self.is_animating = False
+        self.is_continuous_flow = False
+        self.anim_stopcock_open = False
+        self.anim_indicator_dropper_visible = False
+        self.anim_indicator_drops = []
+        self.anim_drop_y = None
+        self.anim_pipette_visible = False
+        self.anim_pipette_stream = False
+        self.anim_flask_fill_frac = 0.0
+        self.anim_pink_bloom_r = 0.0
+        self.anim_ripples.clear()
+        self.flask_chamber.reset()
+
         mode_str = self.trial_type_combo.get()
         mode = TitrationMode.ROUGH if "Rough" in mode_str else TitrationMode.ACCURATE
         next_trial_num = len(self.results_mgr.records) + 1
@@ -1103,14 +1717,17 @@ class VirtualTitrationApp(tk.Tk):
 
         self.conc_derivation_txt = tk.Text(
             deriv_card,
-            bg=THEME.BG_DARKEST,
-            fg="#38bdf8",
-            insertbackground="#ffffff",
+            bg="#ffffff",
+            fg="#0f172a",
+            insertbackground="#0f172a",
             font=FONTS["mono"],
             wrap=tk.WORD,
-            bd=0,
-            padx=12,
-            pady=12
+            relief="solid",
+            bd=1,
+            highlightthickness=1,
+            highlightbackground=THEME.BORDER_SUBTLE,
+            padx=14,
+            pady=14
         )
         self.conc_derivation_txt.pack(fill=tk.BOTH, expand=True)
 
@@ -1212,13 +1829,17 @@ class VirtualTitrationApp(tk.Tk):
         # Detailed Chemical Mechanism Box
         self.err_detail_txt = tk.Text(
             right_card,
-            bg=THEME.BG_DARKEST,
-            fg="#f8fafc",
+            bg="#ffffff",
+            fg="#0f172a",
+            insertbackground="#0f172a",
             font=FONTS["body"],
             wrap=tk.WORD,
-            bd=0,
-            padx=12,
-            pady=12
+            relief="solid",
+            bd=1,
+            highlightthickness=1,
+            highlightbackground=THEME.BORDER_SUBTLE,
+            padx=14,
+            pady=14
         )
         self.err_detail_txt.pack(fill=tk.BOTH, expand=True)
 
@@ -1245,7 +1866,7 @@ class VirtualTitrationApp(tk.Tk):
 
         self.err_title_lbl.config(text=outcome.error_title)
         self.err_direction_lbl.config(text=outcome.direction.value)
-        color = "#10b981" if outcome.direction == ErrorDirection.UNCHANGED else ("#f43f5e" if outcome.direction == ErrorDirection.HIGHER else "#38bdf8")
+        color = "#059669" if outcome.direction == ErrorDirection.UNCHANGED else ("#e11d48" if outcome.direction == ErrorDirection.HIGHER else "#0284c7")
         self.err_direction_lbl.config(fg=color)
 
         self.err_stats_lbl.config(
@@ -1315,14 +1936,17 @@ class VirtualTitrationApp(tk.Tk):
 
         self.report_preview_txt = tk.Text(
             preview_card,
-            bg=THEME.BG_DARKEST,
-            fg="#cbd5e1",
-            insertbackground="#ffffff",
+            bg="#ffffff",
+            fg="#0f172a",
+            insertbackground="#0f172a",
             font=FONTS["mono"],
             wrap=tk.WORD,
-            bd=0,
-            padx=10,
-            pady=10
+            relief="solid",
+            bd=1,
+            highlightthickness=1,
+            highlightbackground=THEME.BORDER_SUBTLE,
+            padx=12,
+            pady=12
         )
         self.report_preview_txt.pack(fill=tk.BOTH, expand=True)
 

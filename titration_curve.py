@@ -47,23 +47,24 @@ class TitrationCurvePlotter:
         self.redraw()
 
     def _apply_dark_instrument_style(self) -> None:
-        """Apply sleek dark navy laboratory styling to figure and axes."""
-        self.fig.patch.set_facecolor("#1e293b")  # Panel background
-        self.ax.set_facecolor("#0f172a")        # Axes dark slate
+        """Apply clean, bright, professional laboratory styling to figure and axes."""
+        self.fig.patch.set_facecolor("#ffffff")  # Clean white panel background
+        self.ax.set_facecolor("#f8fafc")        # Soft crisp plot canvas
+        self.fig.subplots_adjust(left=0.10, right=0.96, top=0.92, bottom=0.12)
 
         # Spines
         for spine in self.ax.spines.values():
-            spine.set_color("#334155")
+            spine.set_color("#cbd5e1")
             spine.set_linewidth(1.0)
 
         # Ticks and Labels
-        self.ax.tick_params(colors="#94a3b8", labelsize=9)
-        self.ax.xaxis.label.set_color("#cbd5e1")
-        self.ax.yaxis.label.set_color("#cbd5e1")
-        self.ax.title.set_color("#f8fafc")
+        self.ax.tick_params(colors="#334155", labelsize=9)
+        self.ax.xaxis.label.set_color("#0f172a")
+        self.ax.yaxis.label.set_color("#0f172a")
+        self.ax.title.set_color("#0f172a")
 
         # Grid
-        self.ax.grid(True, linestyle="--", alpha=0.3, color="#475569")
+        self.ax.grid(True, linestyle="--", alpha=0.5, color="#cbd5e1")
 
     def reset_experimental_data(self) -> None:
         """Clear live experimental points for a fresh trial."""
@@ -165,8 +166,8 @@ class TitrationCurvePlotter:
                 f"Endpoint\n{ep_v:.2f} mL",
                 xy=(ep_v, ep_ph),
                 xytext=(ep_v + 1.2, ep_ph - 1.2),
-                arrowprops=dict(facecolor="#ec4899", shrink=0.08, width=1.0, headwidth=5),
-                color="#fbcfe8",
+                arrowprops=dict(facecolor="#db2777", shrink=0.08, width=1.0, headwidth=5),
+                color="#be185d",
                 fontsize=8,
                 fontweight="bold",
             )
@@ -182,10 +183,10 @@ class TitrationCurvePlotter:
         self.ax.legend(
             loc="lower right",
             fontsize=7.5,
-            facecolor="#1e293b",
-            edgecolor="#334155",
-            labelcolor="#f8fafc",
-            framealpha=0.9,
+            facecolor="#ffffff",
+            edgecolor="#cbd5e1",
+            labelcolor="#0f172a",
+            framealpha=0.95,
         )
 
         self.fig.tight_layout()
